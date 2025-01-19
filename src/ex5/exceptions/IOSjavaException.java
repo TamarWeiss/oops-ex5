@@ -1,4 +1,4 @@
-package ex5.main;
+package ex5.exceptions;
 
 /**
  * Exception for IO-related errors in s-Java processing
