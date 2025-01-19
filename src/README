@@ -1,1 +1,63 @@
 # oops-ex5
+Project Overview & Structure
+
+Main Packages and Classes:
+Our project will live in the ex5 package, with several key components:
+
+1. Main Package (ex5.main):
+- Sjavac: Our entry point class with the main method. It's like the conductor of an orchestra, coordinating all other components.
+- FileProcessor: Handles reading the .sjava file and initial line processing. Think of it as our first line of defense, making sure we can actually read and process the file.
+
+2. Parser Package (ex5.parser):
+- BaseParser: The foundation for all our parsing needs
+- LineParser: Determines what type of line we're dealing with (method declaration, variable declaration, etc.)
+- VariableParser: Specifically handles variable-related lines
+- MethodParser: Takes care of method declarations and their bodies
+
+3. Validators Package (ex5.validators):
+- ScopeValidator: Manages variable and method scope rules
+- TypeValidator: Ensures type compatibility
+- SyntaxValidator: Checks basic syntax rules
+
+4. Exceptions Package (ex5.exceptions):
+- Custom exceptions for different types of errors we might encounter
+
+How It Works
+1. The file comes in through FileProcessor
+2. Each line goes through LineParser to identify what we're dealing with
+3. Specialized parsers handle their specific line types
+4. Validators check if everything follows the rules
+5. We track everything in scopes (like keeping track of variables in different rooms of a house)
+
+The OOP
+We're using several key Object-Oriented principles:
+
+1. Encapsulation: Each class has a specific job and protects its internal workings. For example, the ScopeValidator doesn't need to know how the LineParser works internally.
+
+2. Composition: Instead of making everything inherit from each other, we'll have classes contain instances of other classes. For instance, our MethodParser will use a VariableParser rather than trying to handle variables itself.
+
+3. Single Responsibility: Each class has one main job. This makes our code easier to understand and modify.
+
+Implementation Order
+Here's how I suggest we tackle this project:
+
+1. Foundation Phase:
+- Set up the basic project structure
+- Create the main class that reads files
+- Implement basic regex patterns for line identification
+- Create our exception hierarchy
+
+2. Core Parsing Phase:
+- Build the line parser to identify different types of lines
+- Implement variable parsing (start with simple cases)
+- Create the scope management system
+
+3. Advanced Features Phase:
+- Implement method parsing
+- Add block parsing (if/while)
+- Build type checking system
+
+4. Integration Phase:
+- Connect all components
+- Add comprehensive error handling
+- Implement final validation logic
