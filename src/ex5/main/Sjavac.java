@@ -1,4 +1,6 @@
 package ex5.main;
+import ex5.exceptions.IOSjavaException;
+import ex5.exceptions.IllegalSjavaFileException;
 
 /**
  * Main class for the s-Java verifier.
