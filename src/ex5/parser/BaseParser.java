@@ -1,6 +1,8 @@
 package ex5.parser;
 
 import ex5.IllegalSjavaFileException;
+
+import java.util.Arrays;
 import java.util.regex.Pattern;
 
 /**
@@ -37,12 +39,7 @@ public abstract class BaseParser {
      * @return true if the type is legal, false otherwise
      */
     protected boolean isLegalType(String type) {
-        for (String legalType : LEGAL_TYPES) {
-            if (legalType.equals(type)) {
-                return true;
-            }
-        }
-        return false;
+        return Arrays.asList(LEGAL_TYPES).contains(type);
     }
 
     /**

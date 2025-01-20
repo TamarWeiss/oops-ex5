@@ -1,11 +1,10 @@
 package ex5.validators;
 
 import ex5.IllegalSjavaFileException;
+
 import java.util.regex.Pattern;
 
-/**
- * Validates syntax rules specific to s-Java
- */
+/** Validates syntax rules specific to s-Java */
 public class SyntaxValidator {
     // Patterns for syntax validation
     private static final String VALID_COMMENT = "^\\s*//.*$";
@@ -15,6 +14,7 @@ public class SyntaxValidator {
 
     /**
      * Validates general line syntax
+     *
      * @param line The line to validate
      * @throws IllegalSjavaFileException if syntax is invalid
      */
@@ -37,6 +37,7 @@ public class SyntaxValidator {
 
     /**
      * Validates comment line syntax
+     *
      * @param line The line to validate
      * @throws IllegalSjavaFileException if comment syntax is invalid
      */
@@ -47,13 +48,14 @@ public class SyntaxValidator {
     }
 
     /**
-     * Validates line ending based on line type
-     * @param line The line to validate
+     * Validates line ending based on a line type
+     *
+     * @param line       The line to validate
      * @param isBlockEnd Whether this is a block ending line
      * @throws IllegalSjavaFileException if line ending is invalid
      */
     public void validateLineEnding(String line, boolean isBlockEnd)
-            throws IllegalSjavaFileException {
+    throws IllegalSjavaFileException {
         line = line.trim();
 
         if (isBlockEnd) {
@@ -75,6 +77,7 @@ public class SyntaxValidator {
 
     /**
      * Validates operator absence (not allowed in s-Java)
+     *
      * @param line The line to validate
      * @throws IllegalSjavaFileException if operators are found
      */
@@ -87,6 +90,7 @@ public class SyntaxValidator {
 
     /**
      * Validates array absence (not allowed in s-Java)
+     *
      * @param line The line to validate
      * @throws IllegalSjavaFileException if array syntax is found
      */

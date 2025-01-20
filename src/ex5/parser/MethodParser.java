@@ -1,26 +1,26 @@
 package ex5.parser;
 
 import ex5.IllegalSjavaFileException;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-/**
- * Parser for handling method declarations and bodies in s-Java
- */
+/** Parser for handling method declarations and bodies in s-Java */
 public class MethodParser extends BaseParser {
     // Method declaration pattern
     private static final String METHOD_PATTERN =
             "^\\s*void\\s+([a-zA-Z]\\w*)\\s*\\(\\s*(" +
-                    "(?:(?:final\\s+)?(?:" + String.join("|", LEGAL_TYPES) + ")\\s+" + IDENTIFIER +
-                    "(?:\\s*,\\s*(?:final\\s+)?(?:" + String.join("|", LEGAL_TYPES) + ")\\s+" + IDENTIFIER + ")*" +
-                    ")?\\s*)\\)\\s*\\{\\s*$";
+            "(?:(?:final\\s+)?(?:" + String.join("|", LEGAL_TYPES) + ")\\s+" + IDENTIFIER +
+            "(?:\\s*,\\s*(?:final\\s+)?(?:" + String.join("|", LEGAL_TYPES) + ")\\s+" + IDENTIFIER + ")*" +
+            ")?\\s*)\\)\\s*\\{\\s*$";
 
     private final List<String> methodNames = new ArrayList<>();
 
     /**
      * Validates a method declaration line according to s-Java rules
+     *
      * @param line The declaration line to validate
      * @throws IllegalSjavaFileException if the declaration is invalid
      */
@@ -38,7 +38,7 @@ public class MethodParser extends BaseParser {
         }
         methodNames.add(methodName);
 
-        // Validate method name (must start with letter)
+        // Validate method name (must start with a letter)
         if (!methodName.matches("^[a-zA-Z]\\w*$")) {
             throw new IllegalSjavaFileException("Invalid method name: " + methodName);
         }
@@ -52,7 +52,8 @@ public class MethodParser extends BaseParser {
 
     /**
      * Validates method parameters
-     * @param params The parameter string to validate
+     *
+     * @param params The parameter strings to validate
      * @throws IllegalSjavaFileException if the parameters are invalid
      */
     private void validateParameters(String params) throws IllegalSjavaFileException {
@@ -83,6 +84,7 @@ public class MethodParser extends BaseParser {
 
     /**
      * Checks if a line is a valid return statement
+     *
      * @param line The line to check
      * @return true if it's a valid return statement
      */

@@ -2,10 +2,11 @@ package ex5.validators;
 
 import ex5.IllegalSjavaFileException;
 
-import java.util.*;
-/**
- * Handles scope validation and variable tracking in s-Java
- */
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Stack;
+
+/** Handles scope validation and variable tracking in s-Java */
 public class ScopeValidator {
     private final Map<String, Variable> globalScope = new HashMap<>();
     private final Stack<Map<String, Variable>> scopeStack = new Stack<>();
@@ -14,17 +15,14 @@ public class ScopeValidator {
 
     /**
      * Checks if the current closing brace ends a method
+     *
      * @return true if this closes a method, false if it closes a nested block
      */
     public boolean isMethodEnd() {
         return inMethod && currentScopeDepth == 1;
     }
 
-
-
-    /**
-     * Represents a variable and its properties
-     */
+    /** Represents a variable and its properties */
     private static class Variable {
         final String type;
         final boolean isFinal;
@@ -37,9 +35,7 @@ public class ScopeValidator {
         }
     }
 
-    /**
-     * Enters a new scope (method or block)
-     */
+    /** Enters a new scope (method or block) */
     public void enterScope(boolean isMethod) {
         if (isMethod) {
             inMethod = true;
@@ -49,9 +45,7 @@ public class ScopeValidator {
         scopeStack.push(new HashMap<>());
     }
 
-    /**
-     * Exits the current scope
-     */
+    /** Exits the current scope */
     public void exitScope(boolean isMethod) {
         if (!scopeStack.isEmpty()) {
             scopeStack.pop();
@@ -62,11 +56,10 @@ public class ScopeValidator {
         }
     }
 
-    /**
-     * Declares a variable in the current scope
-     */
-    public void declareVariable(String name, String type, boolean isFinal, boolean isInitialized)
-            throws IllegalSjavaFileException {
+    /** Declares a variable in the current scope */
+    public void declareVariable(
+            String name, String type, boolean isFinal, boolean isInitialized
+    ) throws IllegalSjavaFileException {
         Map<String, Variable> currentScope = scopeStack.isEmpty() ? globalScope : scopeStack.peek();
 
         // Check if variable exists in current scope
@@ -82,9 +75,7 @@ public class ScopeValidator {
         currentScope.put(name, new Variable(type, isFinal, isInitialized));
     }
 
-    /**
-     * Checks if a variable can be assigned a value
-     */
+    /** Checks if a variable can be assigned a value */
     public void validateAssignment(String name) throws IllegalSjavaFileException {
         Variable var = findVariable(name);
         if (var == null) {
@@ -96,9 +87,7 @@ public class ScopeValidator {
         var.isInitialized = true;
     }
 
-    /**
-     * Checks if a variable is accessible and initialized
-     */
+    /** Checks if a variable is accessible and initialized */
     public void validateVariableAccess(String name) throws IllegalSjavaFileException {
         Variable var = findVariable(name);
         if (var == null) {
@@ -109,9 +98,7 @@ public class ScopeValidator {
         }
     }
 
-    /**
-     * Finds a variable in the current scope chain
-     */
+    /** Finds a variable in the current scope chain */
     private Variable findVariable(String name) {
         // Check local scopes from innermost to outermost
         for (int i = scopeStack.size() - 1; i >= 0; i--) {
@@ -124,9 +111,7 @@ public class ScopeValidator {
         return globalScope.get(name);
     }
 
-    /**
-     * Gets the type of a variable if it exists and is accessible
-     */
+    /** Gets the type of variable if it exists and is accessible */
     public String getVariableType(String name) throws IllegalSjavaFileException {
         Variable var = findVariable(name);
         if (var == null) {

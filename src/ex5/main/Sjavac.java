@@ -1,4 +1,5 @@
 package ex5.main;
+
 import ex5.IOSjavaException;
 import ex5.IllegalSjavaFileException;
 
@@ -12,9 +13,7 @@ public class Sjavac {
     private static final int FAILURE = 1;
     private static final int ERROR = 2;
 
-    /**
-     * Processes the input file and returns appropriate status code.
-     */
+    /** Processes the input file and returns appropriate status code */
     private static int processFile(String[] args) {
         if (args.length != 1) {
             System.err.println("Error: Wrong number of arguments");
@@ -22,8 +21,7 @@ public class Sjavac {
         }
 
         try {
-            FileProcessor processor = new FileProcessor(args[0]);
-            processor.processFile();
+            new FileProcessor(args[0]).processFile();
             return SUCCESS;
         } catch (IOSjavaException e) {
             System.err.println(e.getMessage());
@@ -34,9 +32,7 @@ public class Sjavac {
         }
     }
 
-    /**
-     * Main method - entry point of the program.
-     */
+    /** Main method - entry point of the program. */
     public static void main(String[] args) {
         System.out.println(processFile(args));
     }

@@ -1,15 +1,13 @@
 package ex5.parser;
 
 import ex5.IllegalSjavaFileException;
+
 import java.util.regex.Pattern;
 
-/**
- * Parser for identifying and categorizing different types of lines in s-Java code
- */
+/** Parser for identifying and categorizing different types of lines in s-Java code */
 public class LineParser extends BaseParser {
     // Line type patterns
-    private static final String METHOD_PATTERN =
-            "^\\s*void\\s+" + IDENTIFIER + "\\s*\\([^)]*\\)\\s*\\{\\s*$";
+    private static final String METHOD_PATTERN = "^\\s*void\\s+" + IDENTIFIER + "\\s*\\([^)]*\\)\\s*\\{\\s*$";
     private static final String VARIABLE_PATTERN =
             "^\\s*(final\\s+)?(" + String.join("|", LEGAL_TYPES) + ")\\s+.*";
     private static final String COMMENT_PATTERN = "^\\s*//.*";
@@ -18,9 +16,7 @@ public class LineParser extends BaseParser {
     private static final String BLOCK_START_PATTERN = "^\\s*(if|while)\\s*\\([^)]+\\)\\s*\\{\\s*$";
     private static final String BLOCK_END_PATTERN = "^\\s*}\\s*$";
 
-    /**
-     * Represents different types of lines in s-Java
-     */
+    /** Represents different types of lines in s-Java */
     public enum LineType {
         METHOD_DECLARATION,
         VARIABLE_DECLARATION,
@@ -33,7 +29,8 @@ public class LineParser extends BaseParser {
     }
 
     /**
-     * Determines the type of a given line
+     * Determines the type of given line
+     *
      * @param line The line to analyze
      * @return The type of the line
      */
@@ -63,7 +60,8 @@ public class LineParser extends BaseParser {
     }
 
     /**
-     * Validates that a line ends properly according to s-Java rules
+     * Validates that a line ends properly, according to s-Java rules
+     *
      * @param line The line to validate
      * @throws IllegalSjavaFileException if the line ending is invalid
      */
@@ -88,8 +86,7 @@ public class LineParser extends BaseParser {
                 break;
             case COMMENT:
             case EMPTY:
-                // No validation needed for these types
-                break;
+                break; // No validation needed for these types
             default:
                 throw new IllegalSjavaFileException("Invalid line format");
         }
