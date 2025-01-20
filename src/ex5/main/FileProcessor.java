@@ -5,7 +5,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import ex5.IOSjavaException;
 import ex5.IllegalSjavaFileException;
-import ex5.parser.LineParser;
+import ex5.parser.*;
+import ex5.validators.*;
+
 /**
  * Handles the processing and validation of s-Java files
  */
@@ -14,6 +16,12 @@ public class FileProcessor {
     private final String filename;
     private int lineNumber;
     private final LineParser lineParser;
+    private final VariableParser variableParser;
+    private final MethodParser methodParser;
+    private final ScopeValidator scopeValidator;
+    private final TypeValidator typeValidator;
+    private final SyntaxValidator syntaxValidator;
+    private boolean inMethod;
 
     /**
      * Constructor for FileProcessor
@@ -23,6 +31,12 @@ public class FileProcessor {
         validateFileName(filename);
         this.filename = filename;
         this.lineParser = new LineParser();
+        this.variableParser = new VariableParser();
+        this.methodParser = new MethodParser();
+        this.scopeValidator = new ScopeValidator();
+        this.typeValidator = new TypeValidator();
+        this.syntaxValidator = new SyntaxValidator();
+        this.inMethod = false;
     }
 
     /**
@@ -35,9 +49,46 @@ public class FileProcessor {
             String line;
             lineNumber = 0;
 
+            // First pass: collect all method names and global variables
             while ((line = reader.readLine()) != null) {
                 lineNumber++;
+                LineParser.LineType lineType = lineParser.getLineType(line);
+
+                if (lineType == LineParser.LineType.EMPTY || lineType == LineParser.LineType.COMMENT) {
+                    continue;
+                }
+
+                if (!inMethod) {
+                    // Only methods and global variables allowed in global scope
+                    if (lineType != LineParser.LineType.METHOD_DECLARATION &&
+                            lineType != LineParser.LineType.VARIABLE_DECLARATION) {
+                        throw new IllegalSjavaFileException(
+                                "Invalid statement in global scope at line " + lineNumber);
+                    }
+
+                    if (lineType == LineParser.LineType.VARIABLE_DECLARATION) {
+                        processVariableDeclaration(line);
+                    } else if (lineType == LineParser.LineType.METHOD_DECLARATION) {
+                        methodParser.validateMethodDeclaration(line);
+                    }
+                }
+            }
+
+            // Reset for second pass
+            reader.close();
+            BufferedReader secondReader = new BufferedReader(new FileReader(filename));
+            lineNumber = 0;
+            inMethod = false;
+
+            // Second pass: validate method bodies and variable usage
+            while ((line = secondReader.readLine()) != null) {
+                lineNumber++;
                 processLine(line);
+            }
+
+            // Verify all methods end with return statement
+            if (inMethod) {
+                throw new IllegalSjavaFileException("Unclosed method at end of file");
             }
 
         } catch (IOException e) {
@@ -58,29 +109,97 @@ public class FileProcessor {
             return;
         }
 
-        // Validate line ending based on its type
+        // Validate general syntax
+        syntaxValidator.validateLineSyntax(line);
         lineParser.validateLineEnding(line, lineType);
 
         // Process line based on its type
         switch (lineType) {
             case METHOD_DECLARATION:
-                // TODO: Process method declaration
+                scopeValidator.enterScope(true);
+                inMethod = true;
                 break;
+
             case VARIABLE_DECLARATION:
-                // TODO: Process variable declaration
+                if (inMethod) {
+                    processVariableDeclaration(line);
+                }
                 break;
+
             case BLOCK_START:
-                // TODO: Process block start
+                processBlockStart(line);
+                scopeValidator.enterScope(false);
                 break;
+
             case BLOCK_END:
-                // TODO: Process block end
+                if (inMethod && scopeValidator.isMethodEnd()) {
+                    inMethod = false;
+                    scopeValidator.exitScope(true);
+                } else {
+                    scopeValidator.exitScope(false);
+                }
                 break;
+
             case RETURN_STATEMENT:
-                // TODO: Process return statement
+                if (!inMethod) {
+                    throw new IllegalSjavaFileException(
+                            "Return statement outside method at line " + lineNumber);
+                }
                 break;
+
             case INVALID:
                 throw new IllegalSjavaFileException("Invalid line format at line " + lineNumber);
         }
+    }
+
+    /**
+     * Processes a variable declaration line
+     */
+    private void processVariableDeclaration(String line) throws IllegalSjavaFileException {
+        // Remove any trailing semicolon and split multiple declarations
+        String[] declarations = line.substring(0, line.length() - 1).split(",");
+
+        for (String declaration : declarations) {
+            declaration = declaration.trim();
+            String[] parts = declaration.split("=", 2);
+
+            // First part contains type and name
+            String[] typeAndName = parts[0].trim().split("\\s+");
+            boolean isFinal = typeAndName[0].equals("final");
+            int typeIndex = isFinal ? 1 : 0;
+
+            String type = typeAndName[typeIndex];
+            String name = typeAndName[typeIndex + 1];
+            boolean isInitialized = parts.length > 1;
+
+            if (isInitialized) {
+                String value = parts[1].trim();
+                typeValidator.validateLiteralType(type, value);
+            }
+
+            scopeValidator.declareVariable(name, type, isFinal, isInitialized);
+        }
+    }
+
+    /**
+     * Processes a block start (if/while)
+     */
+    private void processBlockStart(String line) throws IllegalSjavaFileException {
+        if (!inMethod) {
+            throw new IllegalSjavaFileException(
+                    "Block statement outside method at line " + lineNumber);
+        }
+
+        // Extract condition from between parentheses
+        int start = line.indexOf('(');
+        int end = line.lastIndexOf(')');
+        if (start == -1 || end == -1) {
+            throw new IllegalSjavaFileException(
+                    "Invalid block condition at line " + lineNumber);
+        }
+
+        String condition = line.substring(start + 1, end).trim();
+        typeValidator.validateConditionType(scopeValidator.getVariableType(condition));
     }
 
     /**
@@ -89,24 +208,6 @@ public class FileProcessor {
     private void validateFileName(String filename) throws IOSjavaException {
         if (filename == null || !filename.endsWith(SJAVA_EXTENSION)) {
             throw new IOSjavaException("File must end with " + SJAVA_EXTENSION);
-        }
-    }
-
-    /**
-     * Validates line endings according to s-Java specifications
-     */
-    private void validateLineEnding(String line) throws IllegalSjavaFileException {
-        line = line.trim();
-        if (line.equals("}")) {
-            return; // Valid closing brace line
-        }
-
-        if (!line.endsWith(";") && !line.endsWith("{") && !line.endsWith("}")) {
-            throw new IllegalSjavaFileException("Line " + lineNumber + ": Invalid line ending");
-        }
-
-        if (line.endsWith("}") && !line.equals("}")) {
-            throw new IllegalSjavaFileException("Line " + lineNumber + ": Closing brace must be on its own line");
         }
     }
 }

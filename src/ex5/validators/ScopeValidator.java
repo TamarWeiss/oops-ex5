@@ -9,7 +9,18 @@ import java.util.*;
 public class ScopeValidator {
     private final Map<String, Variable> globalScope = new HashMap<>();
     private final Stack<Map<String, Variable>> scopeStack = new Stack<>();
+    private int currentScopeDepth = 0;  // Track nested scope depth
     private boolean inMethod = false;
+
+    /**
+     * Checks if the current closing brace ends a method
+     * @return true if this closes a method, false if it closes a nested block
+     */
+    public boolean isMethodEnd() {
+        return inMethod && currentScopeDepth == 1;
+    }
+
+
 
     /**
      * Represents a variable and its properties
@@ -32,7 +43,9 @@ public class ScopeValidator {
     public void enterScope(boolean isMethod) {
         if (isMethod) {
             inMethod = true;
+            currentScopeDepth = 0;
         }
+        currentScopeDepth++;
         scopeStack.push(new HashMap<>());
     }
 
@@ -42,6 +55,7 @@ public class ScopeValidator {
     public void exitScope(boolean isMethod) {
         if (!scopeStack.isEmpty()) {
             scopeStack.pop();
+            currentScopeDepth--;
         }
         if (isMethod) {
             inMethod = false;
