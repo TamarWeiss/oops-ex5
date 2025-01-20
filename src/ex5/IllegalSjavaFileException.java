@@ -1,4 +1,4 @@
-package ex5.exceptions;
+package ex5;
 
 /**
  * Base exception for s-Java syntax and validation errors

@@ -3,8 +3,8 @@ package ex5.main;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import ex5.exceptions.IOSjavaException;
-import ex5.exceptions.IllegalSjavaFileException;
+import ex5.IOSjavaException;
+import ex5.IllegalSjavaFileException;
 import ex5.parser.LineParser;
 /**
  * Handles the processing and validation of s-Java files

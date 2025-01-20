@@ -1,8 +1,7 @@
 package ex5.parser;
 
-import ex5.exceptions.IllegalSjavaFileException;
+import ex5.IllegalSjavaFileException;
 import java.util.regex.Pattern;
-import java.util.regex.Matcher;
 
 /**
  * Parser for identifying and categorizing different types of lines in s-Java code
