@@ -7,6 +7,7 @@ Our project will live in the ex5 package, with several key components:
 1. Main Package (ex5.main):
 - Sjavac: Our entry point class with the main method. It's like the conductor of an orchestra, coordinating all other components.
 - FileProcessor: Handles reading the .sjava file and initial line processing. Think of it as our first line of defense, making sure we can actually read and process the file.
+- Custom exceptions for different types of errors we might encounter
 
 2. Parser Package (ex5.parser):
 - BaseParser: The foundation for all our parsing needs
@@ -19,8 +20,6 @@ Our project will live in the ex5 package, with several key components:
 - TypeValidator: Ensures type compatibility
 - SyntaxValidator: Checks basic syntax rules
 
-4. Exceptions Package (ex5.exceptions):
-- Custom exceptions for different types of errors we might encounter
 
 How It Works
 1. The file comes in through FileProcessor
