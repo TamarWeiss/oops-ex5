@@ -5,7 +5,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import ex5.exceptions.IOSjavaException;
 import ex5.exceptions.IllegalSjavaFileException;
-
+import ex5.parser.LineParser;
 /**
  * Handles the processing and validation of s-Java files
  */
@@ -13,6 +13,7 @@ public class FileProcessor {
     private static final String SJAVA_EXTENSION = ".sjava";
     private final String filename;
     private int lineNumber;
+    private final LineParser lineParser;
 
     /**
      * Constructor for FileProcessor
@@ -21,6 +22,7 @@ public class FileProcessor {
     public FileProcessor(String filename) throws IOSjavaException {
         validateFileName(filename);
         this.filename = filename;
+        this.lineParser = new LineParser();
     }
 
     /**
@@ -49,19 +51,36 @@ public class FileProcessor {
      * @throws IllegalSjavaFileException if the line contains syntax errors
      */
     private void processLine(String line) throws IllegalSjavaFileException {
-        // Skip empty lines
-        if (line.trim().isEmpty()) {
+        LineParser.LineType lineType = lineParser.getLineType(line);
+
+        // Skip empty lines and comments
+        if (lineType == LineParser.LineType.EMPTY || lineType == LineParser.LineType.COMMENT) {
             return;
         }
 
-        // Skip comment lines
-        if (line.trim().startsWith("//")) {
-            return;
-        }
+        // Validate line ending based on its type
+        lineParser.validateLineEnding(line, lineType);
 
-        // Other line validations will be added here
-        // For now, just check basic line endings
-        validateLineEnding(line);
+        // Process line based on its type
+        switch (lineType) {
+            case METHOD_DECLARATION:
+                // TODO: Process method declaration
+                break;
+            case VARIABLE_DECLARATION:
+                // TODO: Process variable declaration
+                break;
+            case BLOCK_START:
+                // TODO: Process block start
+                break;
+            case BLOCK_END:
+                // TODO: Process block end
+                break;
+            case RETURN_STATEMENT:
+                // TODO: Process return statement
+                break;
+            case INVALID:
+                throw new IllegalSjavaFileException("Invalid line format at line " + lineNumber);
+        }
     }
 
     /**
