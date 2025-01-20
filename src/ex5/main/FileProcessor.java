@@ -58,19 +58,17 @@ public class FileProcessor {
                     continue;
                 }
 
-                if (!inMethod) {
-                    // Only methods and global variables allowed in global scope
-                    if (lineType != LineParser.LineType.METHOD_DECLARATION &&
-                            lineType != LineParser.LineType.VARIABLE_DECLARATION) {
-                        throw new IllegalSjavaFileException(
-                                "Invalid statement in global scope at line " + lineNumber);
-                    }
-
-                    if (lineType == LineParser.LineType.VARIABLE_DECLARATION) {
-                        processVariableDeclaration(line);
-                    } else if (lineType == LineParser.LineType.METHOD_DECLARATION) {
-                        methodParser.validateMethodDeclaration(line);
-                    }
+                // Process global scope and method declarations
+                if (lineType == LineParser.LineType.METHOD_DECLARATION) {
+                    methodParser.validateMethodDeclaration(line);
+                    inMethod = true;
+                } else if (lineType == LineParser.LineType.BLOCK_END && inMethod) {
+                    inMethod = false;
+                } else if (!inMethod && lineType != LineParser.LineType.VARIABLE_DECLARATION) {
+                    throw new IllegalSjavaFileException(
+                            "Invalid statement in global scope at line " + lineNumber);
+                } else if (!inMethod && lineType == LineParser.LineType.VARIABLE_DECLARATION) {
+                    processVariableDeclaration(line);
                 }
             }
 
@@ -81,7 +79,16 @@ public class FileProcessor {
             inMethod = false;
 
             // Second pass: validate method bodies and variable usage
+            boolean lastLineWasReturn = false;
             while ((line = secondReader.readLine()) != null) {
+                LineParser.LineType lineType = lineParser.getLineType(line);
+                if (lineType == LineParser.LineType.BLOCK_END && inMethod && scopeValidator.isMethodEnd()) {
+                    if (!lastLineWasReturn) {
+                        throw new IllegalSjavaFileException("Method must end with return statement, line " + lineNumber);
+                    }
+                }
+                lastLineWasReturn = (lineType == LineParser.LineType.RETURN_STATEMENT);
+
                 lineNumber++;
                 processLine(line);
             }
