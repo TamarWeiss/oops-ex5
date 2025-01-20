@@ -1,7 +1,7 @@
 package ex5.main;
 
-import ex5.IOSjavaException;
-import ex5.IllegalSjavaFileException;
+import ex5.exceptions.IOSjavaException;
+import ex5.exceptions.IllegalSjavaFileException;
 import ex5.parser.LineParser;
 import ex5.parser.LineParser.LineType;
 import ex5.parser.MethodParser;

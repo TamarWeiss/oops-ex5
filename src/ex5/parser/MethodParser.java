@@ -1,6 +1,6 @@
 package ex5.parser;
 
-import ex5.IllegalSjavaFileException;
+import ex5.exceptions.IllegalSjavaFileException;
 
 import java.util.ArrayList;
 import java.util.List;

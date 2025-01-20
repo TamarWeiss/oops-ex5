@@ -1,6 +1,6 @@
 package ex5.validators;
 
-import ex5.IllegalSjavaFileException;
+import ex5.exceptions.IllegalSjavaFileException;
 
 import java.util.regex.Pattern;
 
