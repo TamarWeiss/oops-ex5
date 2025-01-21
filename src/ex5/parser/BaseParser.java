@@ -3,6 +3,7 @@ package ex5.parser;
 import ex5.IllegalSjavaFileException;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -16,10 +17,12 @@ public abstract class BaseParser {
     protected static final String FINAL = "final";
 
     // Legal types in s-Java
-    protected static final String[] LEGAL_TYPES = {"int", "double", "String", "boolean", "char"};
+    protected static final List<String> LEGAL_TYPES = Arrays.stream(Types.values())
+            .map(Types::toString).toList();
 
     /**
      * Validates that a given identifier follows s-Java naming rules
+     *
      * @param identifier The identifier to validate
      * @throws IllegalSjavaFileException if the identifier is invalid
      */
@@ -35,15 +38,17 @@ public abstract class BaseParser {
 
     /**
      * Checks if a given type is a legal s-Java type
+     *
      * @param type The type to check
      * @return true if the type is legal, false otherwise
      */
     protected boolean isLegalType(String type) {
-        return Arrays.asList(LEGAL_TYPES).contains(type);
+        return LEGAL_TYPES.contains(type);
     }
 
     /**
      * Validates that a type is legal in s-Java
+     *
      * @param type The type to validate
      * @throws IllegalSjavaFileException if the type is not legal
      */

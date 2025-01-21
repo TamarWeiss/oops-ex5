@@ -1,6 +1,7 @@
 package ex5.validators;
 
 import ex5.IllegalSjavaFileException;
+import ex5.parser.Types;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,11 +25,11 @@ public class ScopeValidator {
 
     /** Represents a variable and its properties */
     private static class Variable {
-        final String type;
+        final Types type;
         final boolean isFinal;
         boolean isInitialized;
 
-        Variable(String type, boolean isFinal, boolean isInitialized) {
+        Variable(Types type, boolean isFinal, boolean isInitialized) {
             this.type = type;
             this.isFinal = isFinal;
             this.isInitialized = isInitialized;
@@ -58,7 +59,7 @@ public class ScopeValidator {
 
     /** Declares a variable in the current scope */
     public void declareVariable(
-            String name, String type, boolean isFinal, boolean isInitialized
+            String name, Types type, boolean isFinal, boolean isInitialized
     ) throws IllegalSjavaFileException {
         Map<String, Variable> currentScope = scopeStack.isEmpty() ? globalScope : scopeStack.peek();
 
@@ -112,7 +113,7 @@ public class ScopeValidator {
     }
 
     /** Gets the type of variable if it exists and is accessible */
-    public String getVariableType(String name) throws IllegalSjavaFileException {
+    public Types getVariableType(String name) throws IllegalSjavaFileException {
         Variable var = findVariable(name);
         if (var == null) {
             throw new IllegalSjavaFileException("Variable not declared: " + name);

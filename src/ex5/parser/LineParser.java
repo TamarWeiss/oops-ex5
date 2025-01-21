@@ -2,6 +2,7 @@ package ex5.parser;
 
 import ex5.IllegalSjavaFileException;
 
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /** Parser for identifying and categorizing different types of lines in s-Java code */
@@ -28,6 +29,16 @@ public class LineParser extends BaseParser {
         INVALID
     }
 
+    Map<String, LineType> map = Map.of(
+            EMPTY_LINE_PATTERN, LineType.EMPTY,
+            COMMENT_PATTERN, LineType.COMMENT,
+            METHOD_PATTERN, LineType.METHOD_DECLARATION,
+            VARIABLE_PATTERN, LineType.VARIABLE_DECLARATION,
+            RETURN_PATTERN, LineType.RETURN_STATEMENT,
+            BLOCK_START_PATTERN, LineType.BLOCK_START,
+            BLOCK_END_PATTERN, LineType.BLOCK_END
+    );
+
     /**
      * Determines the type of given line
      *
@@ -35,26 +46,10 @@ public class LineParser extends BaseParser {
      * @return The type of the line
      */
     public LineType getLineType(String line) {
-        if (Pattern.matches(EMPTY_LINE_PATTERN, line)) {
-            return LineType.EMPTY;
-        }
-        if (Pattern.matches(COMMENT_PATTERN, line)) {
-            return LineType.COMMENT;
-        }
-        if (Pattern.matches(METHOD_PATTERN, line)) {
-            return LineType.METHOD_DECLARATION;
-        }
-        if (Pattern.matches(VARIABLE_PATTERN, line)) {
-            return LineType.VARIABLE_DECLARATION;
-        }
-        if (Pattern.matches(RETURN_PATTERN, line)) {
-            return LineType.RETURN_STATEMENT;
-        }
-        if (Pattern.matches(BLOCK_START_PATTERN, line)) {
-            return LineType.BLOCK_START;
-        }
-        if (Pattern.matches(BLOCK_END_PATTERN, line)) {
-            return LineType.BLOCK_END;
+        for (Map.Entry<String, LineType> entry : map.entrySet()) {
+            if(Pattern.matches(entry.getKey(), line)) {
+                return entry.getValue();
+            }
         }
         return LineType.INVALID;
     }

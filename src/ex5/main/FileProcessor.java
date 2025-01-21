@@ -5,6 +5,7 @@ import ex5.IllegalSjavaFileException;
 import ex5.parser.LineParser;
 import ex5.parser.LineParser.LineType;
 import ex5.parser.MethodParser;
+import ex5.parser.Types;
 import ex5.parser.VariableParser;
 import ex5.validators.ScopeValidator;
 import ex5.validators.SyntaxValidator;
@@ -141,18 +142,15 @@ public class FileProcessor {
                 scopeValidator.enterScope(true);
                 inMethod = true;
                 break;
-
             case VARIABLE_DECLARATION:
                 if (inMethod) {
                     processVariableDeclaration(line);
                 }
                 break;
-
             case BLOCK_START:
                 processBlockStart(line);
                 scopeValidator.enterScope(false);
                 break;
-
             case BLOCK_END:
                 if (inMethod && scopeValidator.isMethodEnd()) {
                     inMethod = false;
@@ -162,14 +160,13 @@ public class FileProcessor {
                     scopeValidator.exitScope(false);
                 }
                 break;
-
             case RETURN_STATEMENT:
                 if (!inMethod) {
                     throw new IllegalSjavaFileException(
-                            "Return statement outside method at line " + lineNumber);
+                            "Return statement outside method at line " + lineNumber
+                    );
                 }
                 break;
-
             case INVALID:
                 throw new IllegalSjavaFileException("Invalid line format at line " + lineNumber);
         }
@@ -188,8 +185,7 @@ public class FileProcessor {
             String[] typeAndName = parts[0].trim().split("\\s+");
             boolean isFinal = typeAndName[0].equals("final");
             int typeIndex = isFinal ? 1 : 0;
-
-            String type = typeAndName[typeIndex];
+            Types type = Types.getType(typeAndName[typeIndex]);
             String name = typeAndName[typeIndex + 1];
             boolean isInitialized = parts.length > 1;
 
@@ -205,16 +201,14 @@ public class FileProcessor {
     /** Processes a block start (if/while) */
     private void processBlockStart(String line) throws IllegalSjavaFileException {
         if (!inMethod) {
-            throw new IllegalSjavaFileException(
-                    "Block statement outside method at line " + lineNumber);
+            throw new IllegalSjavaFileException("Block statement outside method at line " + lineNumber);
         }
 
         // Extract condition from between parentheses
         int start = line.indexOf('(');
         int end = line.lastIndexOf(')');
         if (start == -1 || end == -1) {
-            throw new IllegalSjavaFileException(
-                    "Invalid block condition at line " + lineNumber);
+            throw new IllegalSjavaFileException("Invalid block condition at line " + lineNumber);
         }
 
         String condition = line.substring(start + 1, end).trim();

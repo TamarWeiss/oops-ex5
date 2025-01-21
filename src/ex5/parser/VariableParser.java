@@ -47,14 +47,13 @@ public class VariableParser extends BaseParser {
      * @param value The value to check
      * @return true if the value is valid for the type
      */
-    public boolean isValidValue(String type, String value) {
+    public boolean isValidValue(Types type, String value) {
         return switch (type) {
-            case "int" -> value.matches("^[+-]?\\d+$");
-            case "double" -> value.matches("^[+-]?\\d*\\.?\\d+$");
-            case "boolean" -> value.matches("^(true|false|[+-]?\\d*\\.?\\d+)$");
-            case "char" -> value.matches("^'[^'\\\\]'$");
-            case "String" -> value.matches("^\"[^\"\\\\]*\"$");
-            default -> false;
+            case INT -> value.matches("^[+-]?\\d+$");
+            case DOUBLE -> value.matches("^[+-]?\\d*\\.?\\d+$");
+            case BOOLEAN -> value.matches("^(true|false|[+-]?\\d*\\.?\\d+)$");
+            case CHAR -> value.matches("^'[^'\\\\]'$");
+            case STRING -> value.matches("^\"[^\"\\\\]*\"$");
         };
     }
 }
