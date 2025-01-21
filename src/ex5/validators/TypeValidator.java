@@ -14,24 +14,10 @@ public class TypeValidator {
      */
     public void validateTypeCompatibility(Types targetType, Types valueType)
     throws IllegalSjavaFileException {
-        // Same types are always compatible
-        if (targetType == valueType) { return; }
-
-        boolean isValid = true;
-        switch (targetType) {
-            case DOUBLE:
-                if (valueType != Types.INT) {
-                    isValid = false;
-                }
-                break;
-            case BOOLEAN:
-                if (valueType != Types.INT && valueType != Types.DOUBLE) {
-                    isValid = false;
-                }
-                break;
-            default:
-                isValid = false;
-        }
+        boolean isValid =
+                targetType == valueType ||
+                (targetType == Types.DOUBLE && valueType == Types.INT) ||
+                (targetType == Types.BOOLEAN && (valueType == Types.INT || valueType == Types.DOUBLE));
 
         if (!isValid) {
             throw new IllegalSjavaFileException("Cannot convert " + valueType + " to " + targetType);
