@@ -170,6 +170,9 @@ public class ScopeValidator {
     private boolean inMethod;
     private int currentLine;
 
+    private int nestingLevel = 0;
+    private static final int MAX_NESTING_LEVEL = Integer.MAX_VALUE;
+
     public ScopeValidator() {
         this.globalScope = new HashMap<>();
         this.scopeStack = new ArrayDeque<>();
@@ -188,7 +191,11 @@ public class ScopeValidator {
      * Enters a new scope (method or block)
      * @param isMethodScope true if this is a method scope, false for block scope
      */
-    public void enterScope(boolean isMethodScope) {
+    public void enterScope(boolean isMethodScope) throws IllegalSjavaFileException {
+        nestingLevel++;
+        if (nestingLevel > MAX_NESTING_LEVEL) {
+            throw new IllegalSjavaFileException("Maximum nesting level exceeded", currentLine);
+        }
         if (isMethodScope) {
             inMethod = true;
         }
@@ -200,6 +207,7 @@ public class ScopeValidator {
      * @param isMethodEnd true if this is ending a method, false for block
      */
     public void exitScope(boolean isMethodEnd) throws IllegalSjavaFileException {
+        nestingLevel--;
         if (scopeStack.isEmpty()) {
             throw new IllegalSjavaFileException("Unexpected scope end", currentLine);
         }
@@ -349,5 +357,6 @@ public class ScopeValidator {
         scopeStack.clear();
         inMethod = false;
         currentLine = 0;
+        nestingLevel = 0;
     }
 }

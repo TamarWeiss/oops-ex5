@@ -3,7 +3,9 @@ package ex5.parser;
 import ex5.IllegalSjavaFileException;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -90,5 +92,31 @@ public class MethodParser extends BaseParser {
      */
     public boolean isValidReturnStatement(String line) {
         return line.trim().matches("^\\s*return\\s*;\\s*$");
+    }
+
+    public String[] extractParameters(String declaration) throws IllegalSjavaFileException {
+        int start = declaration.indexOf('(');
+        int end = declaration.lastIndexOf(')');
+        String params = declaration.substring(start + 1, end).trim();
+        return params.isEmpty() ? new String[0] : params.split("\\s*,\\s*");
+    }
+
+    public void validateMethodCall(String line) throws IllegalSjavaFileException {
+        // Remove trailing semicolon and whitespace
+        line = line.substring(0, line.length() - 1).trim();
+
+        // Basic format check
+        if (!line.matches(IDENTIFIER + "\\s*\\([^)]*\\)")) {
+            throw new IllegalSjavaFileException("Invalid method call format", -1);
+        }
+    }
+    private void validateParameterNames(String[] params) throws IllegalSjavaFileException {
+        Set<String> paramNames = new HashSet<>();
+        for (String param : params) {
+            String name = param.trim().split("\\s+")[param.trim().split("\\s+").length - 1];
+            if (!paramNames.add(name)) {
+                throw new IllegalSjavaFileException("Duplicate parameter name: " + name, -1);
+            }
+        }
     }
 }

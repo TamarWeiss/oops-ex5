@@ -11,6 +11,8 @@ public class SyntaxValidator {
     private static final String INVALID_COMMENT = "/\\*|\\*/|^\\s+//";
     private static final String REQUIRED_WHITESPACE =
             "(?:void|final|int|double|String|boolean|char)(?!\\s+)\\w+";
+    private static final String MISSING_REQUIRED_SPACE =
+            "(void|final|int|double|String|boolean|char)(\\w+)";
 
     /**
      * Validates general line syntax
@@ -32,6 +34,12 @@ public class SyntaxValidator {
         // Check required whitespace after keywords
         if (Pattern.matches(REQUIRED_WHITESPACE, line)) {
             throw new IllegalSjavaFileException("Missing required whitespace after keyword", -1);
+        }
+    }// No space between type and identifier
+
+    public void validateRequiredSpaces(String line) throws IllegalSjavaFileException {
+        if (line.matches(".*" + MISSING_REQUIRED_SPACE + ".*")) {
+            throw new IllegalSjavaFileException("Missing required space between type and identifier", -1);
         }
     }
 

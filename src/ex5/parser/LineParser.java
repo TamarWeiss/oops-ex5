@@ -16,12 +16,20 @@ public class LineParser extends BaseParser {
     private static final String RETURN_PATTERN = "^\\s*return\\s*;\\s*$";
     private static final String BLOCK_START_PATTERN = "^\\s*(if|while)\\s*\\([^)]+\\)\\s*\\{\\s*$";
     private static final String BLOCK_END_PATTERN = "^\\s*}\\s*$";
+    private static final String VARIABLE_ASSIGNMENT_PATTERN =
+            "^\\s*" + IDENTIFIER + "\\s*=\\s*.+;\\s*$";
+    private static final String METHOD_CALL_PATTERN =
+            "^\\s*" + IDENTIFIER + "\\s*\\([^)]*\\)\\s*;\\s*$";
+    private static final String VALID_COMMENT_PATTERN = "^//.*$";  // No spaces before //
+    private static final String COMMENT_WITH_SPACES_PATTERN = "^\\s+//.*$";  // To explicitly catch invalid comments
 
     /** Represents different types of lines in s-Java */
     public enum LineType {
         METHOD_DECLARATION,
         VARIABLE_DECLARATION,
         COMMENT,
+        VARIABLE_ASSIGNMENT,
+        METHOD_CALL,
         EMPTY,
         RETURN_STATEMENT,
         BLOCK_START,
@@ -36,7 +44,10 @@ public class LineParser extends BaseParser {
             VARIABLE_PATTERN, LineType.VARIABLE_DECLARATION,
             RETURN_PATTERN, LineType.RETURN_STATEMENT,
             BLOCK_START_PATTERN, LineType.BLOCK_START,
-            BLOCK_END_PATTERN, LineType.BLOCK_END
+            BLOCK_END_PATTERN, LineType.BLOCK_END,
+            VARIABLE_ASSIGNMENT_PATTERN, LineType.VARIABLE_ASSIGNMENT,
+            METHOD_CALL_PATTERN, LineType.METHOD_CALL
+
     );
 
     /**
