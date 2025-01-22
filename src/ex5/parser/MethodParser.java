@@ -27,20 +27,20 @@ public class MethodParser extends BaseParser {
     public void validateMethodDeclaration(String line) throws IllegalSjavaFileException {
         Matcher matcher = Pattern.compile(METHOD_PATTERN).matcher(line);
         if (!matcher.matches()) {
-            throw new IllegalSjavaFileException("Invalid method declaration format");
+            throw new IllegalSjavaFileException("Invalid method declaration format", -1);
         }
 
         String methodName = matcher.group(1);
 
         // Check for method overloading (not allowed in s-Java)
         if (methodNames.contains(methodName)) {
-            throw new IllegalSjavaFileException("Method overloading is not allowed: " + methodName);
+            throw new IllegalSjavaFileException("Method overloading is not allowed: " + methodName, -1);
         }
         methodNames.add(methodName);
 
         // Validate method name (must start with a letter)
         if (!methodName.matches("^[a-zA-Z]\\w*$")) {
-            throw new IllegalSjavaFileException("Invalid method name: " + methodName);
+            throw new IllegalSjavaFileException("Invalid method name: " + methodName, -1);
         }
 
         // Validate parameters if present
@@ -64,14 +64,14 @@ public class MethodParser extends BaseParser {
 
             // Check for 2 or 3 parts (final modifier is optional)
             if (parts.length < 2 || parts.length > 3) {
-                throw new IllegalSjavaFileException("Invalid parameter format: " + param);
+                throw new IllegalSjavaFileException("Invalid parameter format: " + param, -1);
             }
 
             int typeIndex = parts.length == 3 ? 1 : 0;
 
             // Validate final modifier if present
             if (parts.length == 3 && !parts[0].equals("final")) {
-                throw new IllegalSjavaFileException("Invalid parameter modifier: " + parts[0]);
+                throw new IllegalSjavaFileException("Invalid parameter modifier: " + parts[0], -1);
             }
 
             // Validate type

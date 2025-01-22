@@ -65,25 +65,25 @@ public class LineParser extends BaseParser {
             case METHOD_DECLARATION:
             case BLOCK_START:
                 if (!line.trim().endsWith("{")) {
-                    throw new IllegalSjavaFileException("Invalid block start line ending");
+                    throw new IllegalSjavaFileException("Invalid block start line ending", -1);
                 }
                 break;
             case BLOCK_END:
                 if (!line.trim().equals("}")) {
-                    throw new IllegalSjavaFileException("Invalid block end line");
+                    throw new IllegalSjavaFileException("Invalid block end line", -1);
                 }
                 break;
             case VARIABLE_DECLARATION:
             case RETURN_STATEMENT:
                 if (!line.trim().endsWith(";")) {
-                    throw new IllegalSjavaFileException("Missing semicolon at line end");
+                    throw new IllegalSjavaFileException("Missing semicolon at line end", -1);
                 }
                 break;
             case COMMENT:
             case EMPTY:
                 break; // No validation needed for these types
             default:
-                throw new IllegalSjavaFileException("Invalid line format");
+                throw new IllegalSjavaFileException("Invalid line format", -1);
         }
     }
 }

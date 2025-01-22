@@ -28,11 +28,11 @@ public abstract class BaseParser {
      */
     protected void validateIdentifier(String identifier) throws IllegalSjavaFileException {
         if (identifier == null || identifier.isEmpty()) {
-            throw new IllegalSjavaFileException("Empty identifier");
+            throw new IllegalSjavaFileException("Empty identifier", -1);
         }
 
         if (!Pattern.matches(IDENTIFIER, identifier)) {
-            throw new IllegalSjavaFileException("Invalid identifier: " + identifier);
+            throw new IllegalSjavaFileException("Invalid identifier: " + identifier, -1);
         }
     }
 
@@ -54,7 +54,7 @@ public abstract class BaseParser {
      */
     protected void validateType(String type) throws IllegalSjavaFileException {
         if (!isLegalType(type)) {
-            throw new IllegalSjavaFileException("Invalid type: " + type);
+            throw new IllegalSjavaFileException("Invalid type: " + type, -1);
         }
     }
 }

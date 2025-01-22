@@ -65,12 +65,12 @@ public class ScopeValidator {
 
         // Check if variable exists in current scope
         if (currentScope.containsKey(name)) {
-            throw new IllegalSjavaFileException("Variable already declared in current scope: " + name);
+            throw new IllegalSjavaFileException("Variable already declared in current scope: " + name, -1);
         }
 
         // For global scope, check no other global has same name
         if (currentScope == globalScope && findVariable(name) != null) {
-            throw new IllegalSjavaFileException("Global variable name conflict: " + name);
+            throw new IllegalSjavaFileException("Global variable name conflict: " + name, -1);
         }
 
         currentScope.put(name, new Variable(type, isFinal, isInitialized));
@@ -80,10 +80,10 @@ public class ScopeValidator {
     public void validateAssignment(String name) throws IllegalSjavaFileException {
         Variable var = findVariable(name);
         if (var == null) {
-            throw new IllegalSjavaFileException("Variable not declared: " + name);
+            throw new IllegalSjavaFileException("Variable not declared: " + name, -1);
         }
         if (var.isFinal && var.isInitialized) {
-            throw new IllegalSjavaFileException("Cannot reassign final variable: " + name);
+            throw new IllegalSjavaFileException("Cannot reassign final variable: " + name, -1);
         }
         var.isInitialized = true;
     }
@@ -92,10 +92,10 @@ public class ScopeValidator {
     public void validateVariableAccess(String name) throws IllegalSjavaFileException {
         Variable var = findVariable(name);
         if (var == null) {
-            throw new IllegalSjavaFileException("Variable not declared: " + name);
+            throw new IllegalSjavaFileException("Variable not declared: " + name, -1);
         }
         if (!var.isInitialized && !globalScope.containsKey(name)) {
-            throw new IllegalSjavaFileException("Local variable not initialized: " + name);
+            throw new IllegalSjavaFileException("Local variable not initialized: " + name, -1);
         }
     }
 
@@ -116,7 +116,7 @@ public class ScopeValidator {
     public Types getVariableType(String name) throws IllegalSjavaFileException {
         Variable var = findVariable(name);
         if (var == null) {
-            throw new IllegalSjavaFileException("Variable not declared: " + name);
+            throw new IllegalSjavaFileException("Variable not declared: " + name, -1);
         }
         return var.type;
     }

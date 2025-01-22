@@ -27,6 +27,7 @@ public class FileProcessor {
     private final TypeValidator typeValidator;
     private final SyntaxValidator syntaxValidator;
     private boolean inMethod;
+    private boolean lastLineWasReturn;
 
     /**
      * Constructor for FileProcessor
@@ -43,6 +44,7 @@ public class FileProcessor {
         this.typeValidator = new TypeValidator();
         this.syntaxValidator = new SyntaxValidator();
         this.inMethod = false;
+        this.lastLineWasReturn = false;
     }
 
     /**
@@ -52,69 +54,212 @@ public class FileProcessor {
      * @throws IllegalSjavaFileException for syntax errors
      */
     public void processFile() throws IOSjavaException, IllegalSjavaFileException {
-        try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
-            String line;
-            lineNumber = 0;
+        try {
+            // First pass: collect global structure
+            try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
+                String line;
+                lineNumber = 0;
 
-            // First pass: collect all method names and global variables
-            while ((line = reader.readLine()) != null) {
-                lineNumber++;
-                LineType lineType = lineParser.getLineType(line);
+                while ((line = reader.readLine()) != null) {
+                    lineNumber++;
+                    LineType lineType = lineParser.getLineType(line);
 
-                if (lineType == LineType.EMPTY || lineType == LineType.COMMENT) {
-                    continue;
-                }
+                    if (lineType == LineType.EMPTY || lineType == LineType.COMMENT) {
+                        continue;
+                    }
 
-                switch (lineType) {
-                    case METHOD_DECLARATION:
-                        methodParser.validateMethodDeclaration(line);
-                        inMethod = true;
-                        break;
-                    case BLOCK_END:
-                        inMethod = false;
-                        break;
-                    case VARIABLE_DECLARATION:
-                        if (!inMethod) {
-                            throw new IllegalSjavaFileException(
-                                    "Invalid statement in global scope at line " + lineNumber
-                            );
-                        }
-                        processVariableDeclaration(line);
-                        break;
-                }
-            }
+                    syntaxValidator.validateLineSyntax(line);
 
-            // Reset for second pass
-            reader.close();
-            BufferedReader secondReader = new BufferedReader(new FileReader(filename));
-            lineNumber = 0;
-            inMethod = false;
+                    switch (lineType) {
+                        case METHOD_DECLARATION:
+                            methodParser.validateMethodDeclaration(line);
+                            scopeValidator.enterScope(true);  // Using existing method
+                            inMethod = true;
+                            break;
 
-            // Second pass: validate method bodies and variable usage
-            boolean lastLineWasReturn = false;
-            while ((line = secondReader.readLine()) != null) {
-                LineType lineType = lineParser.getLineType(line);
+                        case BLOCK_END:
+                            if (inMethod) {
+                                if (scopeValidator.isMethodEnd()) {
+                                    inMethod = false;
+                                    scopeValidator.exitScope(true);
+                                } else {
+                                    scopeValidator.exitScope(false);
+                                }
+                            }
+                            break;
 
-                if (lineType == LineType.BLOCK_END && inMethod && scopeValidator.isMethodEnd()) {
-                    if (!lastLineWasReturn) {
-                        throw new IllegalSjavaFileException(
-                                "Method must end with return statement, line " + lineNumber
-                        );
+                        case VARIABLE_DECLARATION:
+                            if (!inMethod) {
+                                variableParser.validateDeclaration(line);
+                                processVariableDeclaration(line, true); // true for global
+                            }
+                            break;
+
+                        case BLOCK_START:
+                            if (inMethod) {
+                                scopeValidator.enterScope(false);
+                            }
+                            break;
                     }
                 }
-                lastLineWasReturn = lineType == LineType.RETURN_STATEMENT;
 
-                lineNumber++;
-                processLine(line);
+                if (inMethod) {
+                    throw new IllegalSjavaFileException(
+                            "Unclosed method block at end of file", lineNumber
+                    );
+                }
             }
 
-            // Verify all methods end with a return statement
-            if (inMethod) {
-                throw new IllegalSjavaFileException("Unclosed method at end of file");
+            // First pass code remains the same...
+
+            // Second pass: validate method internals and variable usage
+            try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
+                String line;
+                lineNumber = 0;
+                inMethod = false;
+
+                while ((line = reader.readLine()) != null) {
+                    lineNumber++;
+                    LineType lineType = lineParser.getLineType(line);
+
+                    if (lineType == LineType.EMPTY || lineType == LineType.COMMENT) {
+                        continue;
+                    }
+
+                    switch (lineType) {
+                        case METHOD_DECLARATION -> {
+                            inMethod = true;
+                            scopeValidator.enterScope(true);
+                        }
+                        case VARIABLE_DECLARATION -> {
+                            if (inMethod) {
+                                // Validate and process local variable
+                                variableParser.validateDeclaration(line);
+                                processVariableDeclaration(line, false); // false for local
+                            }
+                        }
+                        case BLOCK_START -> {
+                            if (inMethod) {
+                                // Check condition (if/while)
+                                validateBlockCondition(line);
+                                scopeValidator.enterScope(false);
+                            }
+                        }
+                        case BLOCK_END -> {
+                            if (inMethod) {
+                                if (scopeValidator.isMethodEnd()) {
+                                    // Check if last statement was return
+                                    if (!lastLineWasReturn) {
+                                        throw new IllegalSjavaFileException(
+                                                "Method must end with return statement",
+                                                lineNumber
+                                        );
+                                    }
+                                    inMethod = false;
+                                    scopeValidator.exitScope(true);
+                                } else {
+                                    scopeValidator.exitScope(false);
+                                }
+                            }
+                        }
+                        case RETURN_STATEMENT -> {
+                            if (!inMethod) {
+                                throw new IllegalSjavaFileException(
+                                        "Return statement outside method",
+                                        lineNumber
+                                );
+                            }
+                            if (!methodParser.isValidReturnStatement(line)) {
+                                throw new IllegalSjavaFileException(
+                                        "Invalid return statement",
+                                        lineNumber
+                                );
+                            }
+                            lastLineWasReturn = true;
+                        }
+                    }
+                    // If not a return statement, update lastLineWasReturn
+                    if (lineType != LineType.RETURN_STATEMENT) {
+                        lastLineWasReturn = false;
+                    }
+                }
             }
 
         } catch (IOException e) {
             throw new IOSjavaException("Failed to read file: " + e.getMessage());
+        }
+    }
+
+    private void validateBlockCondition(String line) throws IllegalSjavaFileException {
+        // Extract condition between parentheses
+        int start = line.indexOf('(');
+        int end = line.lastIndexOf(')');
+
+        if (start == -1 || end == -1 || start > end) {
+            throw new IllegalSjavaFileException(
+                    "Invalid block condition syntax",
+                    lineNumber
+            );
+        }
+
+        String condition = line.substring(start + 1, end).trim();
+
+        // Empty condition
+        if (condition.isEmpty()) {
+            throw new IllegalSjavaFileException(
+                    "Empty condition in if/while block",
+                    lineNumber
+            );
+        }
+
+        // Validate condition - could be a boolean literal, number, or variable
+        if (condition.matches("^(true|false)$")) {
+            return; // Valid boolean literal
+        }
+
+        try {
+            // Check if it's a valid number
+            Double.parseDouble(condition);
+            return;
+        } catch (NumberFormatException e) {
+            // Not a number, must be a variable
+            scopeValidator.validateVariableAccess(condition);
+            Types type = scopeValidator.getVariableType(condition);
+
+            // Check if type can be used in condition
+            if (type != Types.BOOLEAN && type != Types.INT && type != Types.DOUBLE) {
+                throw new IllegalSjavaFileException(
+                        "Invalid condition type: " + type,
+                        lineNumber
+                );
+            }
+        }
+    }
+    private void processVariableDeclaration(String line, boolean isGlobal)
+            throws IllegalSjavaFileException {
+        // Remove trailing semicolon
+        line = line.substring(0, line.length() - 1);
+
+        // Split multiple declarations
+        String[] declarations = line.split(",");
+
+        for (String declaration : declarations) {
+            declaration = declaration.trim();
+            boolean isFinal = declaration.startsWith("final");
+
+            if (isFinal) {
+                declaration = declaration.substring(5).trim();
+            }
+
+            String[] parts = declaration.split("=", 2);
+            String[] typeAndName = parts[0].trim().split("\\s+");
+
+            Types type = Types.getType(typeAndName[typeAndName.length - 2]);
+            String name = typeAndName[typeAndName.length - 1];
+            boolean isInitialized = parts.length > 1;
+
+            // Use existing ScopeValidator method
+            scopeValidator.declareVariable(name, type, isFinal, isInitialized);
         }
     }
 
@@ -144,7 +289,7 @@ public class FileProcessor {
                 break;
             case VARIABLE_DECLARATION:
                 if (inMethod) {
-                    processVariableDeclaration(line);
+                    processVariableDeclaration(line, false);
                 }
                 break;
             case BLOCK_START:
@@ -163,52 +308,26 @@ public class FileProcessor {
             case RETURN_STATEMENT:
                 if (!inMethod) {
                     throw new IllegalSjavaFileException(
-                            "Return statement outside method at line " + lineNumber
-                    );
+                            "Return statement outside method at line " + lineNumber,
+                            lineNumber);
                 }
                 break;
             case INVALID:
-                throw new IllegalSjavaFileException("Invalid line format at line " + lineNumber);
-        }
-    }
-
-    /** Processes a variable declaration line */
-    private void processVariableDeclaration(String line) throws IllegalSjavaFileException {
-        // Remove any trailing semicolon and split multiple declarations
-        String[] declarations = line.substring(0, line.length() - 1).split(",");
-
-        for (String declaration : declarations) {
-            declaration = declaration.trim();
-            String[] parts = declaration.split("=", 2);
-
-            // The First part contains type and name
-            String[] typeAndName = parts[0].trim().split("\\s+");
-            boolean isFinal = typeAndName[0].equals("final");
-            int typeIndex = isFinal ? 1 : 0;
-            Types type = Types.getType(typeAndName[typeIndex]);
-            String name = typeAndName[typeIndex + 1];
-            boolean isInitialized = parts.length > 1;
-
-            if (isInitialized) {
-                String value = parts[1].trim();
-                typeValidator.validateLiteralType(type, value);
-            }
-
-            scopeValidator.declareVariable(name, type, isFinal, isInitialized);
+                throw new IllegalSjavaFileException("Invalid line format at line " + lineNumber, lineNumber);
         }
     }
 
     /** Processes a block start (if/while) */
     private void processBlockStart(String line) throws IllegalSjavaFileException {
         if (!inMethod) {
-            throw new IllegalSjavaFileException("Block statement outside method at line " + lineNumber);
+            throw new IllegalSjavaFileException("Block statement outside method at line " + lineNumber, lineNumber);
         }
 
         // Extract condition from between parentheses
         int start = line.indexOf('(');
         int end = line.lastIndexOf(')');
         if (start == -1 || end == -1) {
-            throw new IllegalSjavaFileException("Invalid block condition at line " + lineNumber);
+            throw new IllegalSjavaFileException("Invalid block condition at line " + lineNumber, lineNumber);
         }
 
         String condition = line.substring(start + 1, end).trim();
