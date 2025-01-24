@@ -112,36 +112,6 @@ public class ValidationManager {
     /**
      * Processes variable declarations
      */
-//    private void processVariableDeclaration(String line) throws IllegalSjavaFileException {
-//        variableParser.validateDeclaration(line);
-//
-//        // Handle multiple variable declarations
-//        String[] declarations = line.substring(0, line.length() - 1).split(",");
-//        boolean isFinal = line.trim().startsWith("final");
-//
-//        for (String declaration : declarations) {
-//            String[] parts = declaration.trim().split("=");
-//            String[] typeAndName = parts[0].trim().split("\\s+");
-//
-//            // Handle final modifier in type extraction
-//            int typeIndex = isFinal ? 1 : 0;
-//            //Types type = Types.getType(typeAndName[typeIndex]); - changed to see if fixed
-////            Types type = Types.getType(typeAndName[0]);
-//            Types type = Types.getType(typeAndName[isFinal ? 1 : 0]);
-//
-//            String name = typeAndName[typeAndName.length - 1];
-//            boolean isInitialized = parts.length > 1;
-//
-//            // If initialized, validate the value
-//            if (isInitialized) {
-//                String value = parts[1].trim();
-//                typeValidator.validateLiteralType(type, value);
-//            }
-//
-//            scopeValidator.declareVariable(name, type, isFinal, isInitialized);
-//        }
-//    }
-    // new code
     private void processVariableDeclaration(String line) throws IllegalSjavaFileException {
         variableParser.validateDeclaration(line);
 
