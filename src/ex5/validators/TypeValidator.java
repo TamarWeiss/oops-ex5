@@ -8,19 +8,17 @@ public class TypeValidator {
     /**
      * Checks if a value type can be assigned to a variable of target type
      *
-     * @param targetType Type of the variable being assigned to
-     * @param valueType  Type of the value being assigned
+     * @param target Type of the variable being assigned to
+     * @param value  Type of the value being assigned
      * @throws IllegalSjavaFileException if types are incompatible
      */
-    public void validateTypeCompatibility(Types targetType, Types valueType)
+    public void validateTypeCompatibility(Types target, Types value)
     throws IllegalSjavaFileException {
-        boolean isValid =
-                targetType == valueType ||
-                (targetType == Types.DOUBLE && valueType == Types.INT) ||
-                (targetType == Types.BOOLEAN && (valueType == Types.INT || valueType == Types.DOUBLE));
+        boolean isValid = target == value || (target == Types.DOUBLE && value == Types.INT) ||
+                          (target == Types.BOOLEAN && (value == Types.INT || value == Types.DOUBLE));
 
         if (!isValid) {
-            throw new IllegalSjavaFileException("Cannot convert " + valueType + " to " + targetType, -1);
+            throw new IllegalSjavaFileException("Cannot convert " + value + " to " + target, -1);
         }
     }
 

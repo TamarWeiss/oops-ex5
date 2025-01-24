@@ -35,7 +35,7 @@ public class FileProcessor {
     /**
      * Processes the s-Java file
      *
-     * @throws IOSjavaException for IO-related errors
+     * @throws IOSjavaException          for IO-related errors
      * @throws IllegalSjavaFileException for syntax errors
      */
     public void processFile() throws IOSjavaException, IllegalSjavaFileException {
@@ -49,12 +49,9 @@ public class FileProcessor {
                 validationManager.validateLine(line, lineNumber);
             }
 
-            // Check final state
+            // Check the final state
             if (validationManager.isInMethod()) {
-                throw new IllegalSjavaFileException(
-                        "Unclosed method block at end of file",
-                        lineNumber
-                );
+                throw new IllegalSjavaFileException("Unclosed method block at end of file", lineNumber);
             }
 
         } catch (IOException e) {

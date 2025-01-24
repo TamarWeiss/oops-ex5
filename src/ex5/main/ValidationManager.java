@@ -40,9 +40,7 @@ public class ValidationManager {
         this.lastLineWasReturn = false;
     }
 
-    /**
-     * Validates a single line of code through the complete validation chain
-     */
+    /** Validates a single line of code through the complete validation chain */
     public void validateLine(String line, int lineNumber) throws IllegalSjavaFileException {
         this.currentLine = lineNumber;
         scopeValidator.setCurrentLine(lineNumber);
@@ -58,7 +56,7 @@ public class ValidationManager {
             syntaxValidator.validateLineSyntax(line);
             lineParser.validateLineEnding(line, lineType);
 
-            // Process based on line type
+            // Process based on a line type
             switch (lineType) {
                 case METHOD_DECLARATION -> processMethodDeclaration(line);
                 case VARIABLE_DECLARATION -> processVariableDeclaration(line);
@@ -77,17 +75,14 @@ public class ValidationManager {
 
         } catch (IllegalSjavaFileException e) {
             throw new IllegalSjavaFileException(
-                    String.format("Line %d: %s", currentLine, e.getMessage()),
-                    currentLine
+                    String.format("Line %d: %s", currentLine, e.getMessage()), currentLine
             );
         }
     }
 
-    /**
-     * Processes method declarations
-     */
+    /** Processes method declarations */
     private void processMethodDeclaration(String line) throws IllegalSjavaFileException {
-        if (!scopeValidator.isInMethod()) {
+        if (!isInMethod()) {
             methodParser.validateMethodDeclaration(line);
             scopeValidator.enterScope(true);
 
@@ -103,15 +98,13 @@ public class ValidationManager {
 
                 scopeValidator.declareParameter(name, type, isFinal);
             }
-        } else {
-            throw new IllegalSjavaFileException(
-                    "Nested method declarations are not allowed", currentLine);
+        }
+        else {
+            throw new IllegalSjavaFileException("Nested method declarations are not allowed", currentLine);
         }
     }
 
-    /**
-     * Processes variable declarations
-     */
+    /** Processes variable declarations */
     private void processVariableDeclaration(String line) throws IllegalSjavaFileException {
         variableParser.validateDeclaration(line);
 
@@ -146,7 +139,8 @@ public class ValidationManager {
                         value = value.substring(0, value.length() - 1).trim();
                     }
                 }
-            } else {
+            }
+            else {
                 // Subsequent declarations
                 String[] parts = declaration.split("=");
                 name = parts[0].trim();
@@ -160,7 +154,9 @@ public class ValidationManager {
             }
 
             if (isFinal && !isInitialized) {
-                throw new IllegalSjavaFileException("Final variable must be initialized: " + name, currentLine);
+                throw new IllegalSjavaFileException(
+                        "Final variable must be initialized: " + name, currentLine
+                );
             }
 
             if (isInitialized) {
@@ -180,17 +176,14 @@ public class ValidationManager {
         }
     }
 
-    /**
-     * Processes variable assignments
-     */
+    /** Processes variable assignments */
     private void processVariableAssignment(String line) throws IllegalSjavaFileException {
         String[] assignments = line.substring(0, line.length() - 1).split(",");
 
         for (String assignment : assignments) {
             Matcher matcher = VARIABLE_ASSIGNMENT_PATTERN.matcher(assignment);
             if (!matcher.matches()) {
-                throw new IllegalSjavaFileException(
-                        "Invalid assignment format", currentLine);
+                throw new IllegalSjavaFileException("Invalid assignment format", currentLine);
             }
 
             String varName = matcher.group(1);
@@ -215,72 +208,52 @@ public class ValidationManager {
             scopeValidator.validateAssignment(varName);
         }
     }
-    /**
-     * Processes block starts (if/while)
-     */
+
+    /** Processes block starts (if/while) */
     private void processBlockStart(String line) throws IllegalSjavaFileException {
-        if (!scopeValidator.isInMethod()) {
-            throw new IllegalSjavaFileException(
-                    "Block statement outside method", currentLine);
+        if (!isInMethod()) {
+            throw new IllegalSjavaFileException("Block statement outside method", currentLine);
         }
 
         Matcher matcher = CONDITION_PATTERN.matcher(line);
         if (!matcher.find()) {
-            throw new IllegalSjavaFileException(
-                    "Invalid block condition format", currentLine);
+            throw new IllegalSjavaFileException("Invalid block condition format", currentLine);
         }
 
         String condition = matcher.group(1).trim();
         validateCondition(condition);
-
         scopeValidator.enterScope(false);
     }
 
-    /**
-     * Processes block ends
-     */
+    /** Processes block ends */
     private void processBlockEnd() throws IllegalSjavaFileException {
-        if (scopeValidator.isMethodEnd()) {
-            if (!lastLineWasReturn) {
-                throw new IllegalSjavaFileException(
-                        "Missing return statement at method end", currentLine);
-            }
-            scopeValidator.exitScope(true);
-        } else {
-            scopeValidator.exitScope(false);
+        boolean isMethodEnd = scopeValidator.isMethodEnd();
+        if (isMethodEnd && !lastLineWasReturn) {
+            throw new IllegalSjavaFileException("Missing return statement at method end", currentLine);
         }
+        scopeValidator.exitScope(isMethodEnd);
     }
 
-    /**
-     * Processes return statements
-     */
+    /** Processes return statements */
     private void processReturnStatement(String line) throws IllegalSjavaFileException {
-        if (!scopeValidator.isInMethod()) {
-            throw new IllegalSjavaFileException(
-                    "Return statement outside method", currentLine);
+        if (!isInMethod()) {
+            throw new IllegalSjavaFileException("Return statement outside method", currentLine);
         }
 
         if (!methodParser.isValidReturnStatement(line)) {
-            throw new IllegalSjavaFileException(
-                    "Invalid return statement format", currentLine);
+            throw new IllegalSjavaFileException("Invalid return statement format", currentLine);
         }
     }
 
-    /**
-     * Processes method calls
-     */
+    /** Processes method calls */
     private void processMethodCall(String line) throws IllegalSjavaFileException {
-        if (!scopeValidator.isInMethod()) {
-            throw new IllegalSjavaFileException(
-                    "Method call outside method body", currentLine);
+        if (!isInMethod()) {
+            throw new IllegalSjavaFileException("Method call outside method body", currentLine);
         }
-
         methodParser.validateMethodCall(line);
     }
 
-    /**
-     * Validates conditions in if/while statements
-     */
+    /** Validates conditions in if/while statements */
     private void validateCondition(String condition) throws IllegalSjavaFileException {
         // Handle boolean literals
         if (condition.equals("true") || condition.equals("false")) {
@@ -295,21 +268,17 @@ public class ValidationManager {
             // Not a number, continue to variable check
         }
 
-        // Must be a variable - validate it exists and has compatible type
+        // Must be a variable - validate it exists and has a compatible type
         Types type = scopeValidator.getVariableType(condition);
         typeValidator.validateConditionType(type);
     }
 
-    /**
-     * Get current method status
-     */
+    /** Get current method status */
     public boolean isInMethod() {
         return scopeValidator.isInMethod();
     }
 
-    /**
-     * Reset all validators' state
-     */
+    /** Reset all validators' state */
     public void reset() {
         currentLine = 0;
         lastLineWasReturn = false;

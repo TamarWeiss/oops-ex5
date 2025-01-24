@@ -94,7 +94,7 @@ public class MethodParser extends BaseParser {
         return line.trim().matches("^\\s*return\\s*;\\s*$");
     }
 
-    public String[] extractParameters(String declaration) throws IllegalSjavaFileException {
+    public String[] extractParameters(String declaration) {
         int start = declaration.indexOf('(');
         int end = declaration.lastIndexOf(')');
         String params = declaration.substring(start + 1, end).trim();

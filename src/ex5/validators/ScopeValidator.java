@@ -53,15 +53,14 @@ public class ScopeValidator {
         this.currentLine = 0;
     }
 
-    /**
-     * Sets the current line number for better error reporting
-     */
+    /** Sets the current line number for better error reporting */
     public void setCurrentLine(int lineNumber) {
         this.currentLine = lineNumber;
     }
 
     /**
      * Enters a new scope (method or block)
+     *
      * @param isMethodScope true if this is a method scope, false for block scope
      */
     public void enterScope(boolean isMethodScope) throws IllegalSjavaFileException {
@@ -77,6 +76,7 @@ public class ScopeValidator {
 
     /**
      * Exits the current scope
+     *
      * @param isMethodEnd true if this is ending a method, false for block
      */
     public void exitScope(boolean isMethodEnd) throws IllegalSjavaFileException {
@@ -94,115 +94,90 @@ public class ScopeValidator {
         }
     }
 
-    /**
-     * Declares a method parameter
-     */
-    public void declareParameter(String name, Types type, boolean isFinal)
-            throws IllegalSjavaFileException {
+    /** Declares a method parameter */
+    public void declareParameter(String name, Types type, boolean isFinal) throws IllegalSjavaFileException {
         if (scopeStack.isEmpty() || !scopeStack.peek().isMethodScope) {
             throw new IllegalSjavaFileException(
-                    "Method parameter declaration outside method scope", currentLine);
+                    "Method parameter declaration outside method scope", currentLine
+            );
         }
 
         Scope methodScope = scopeStack.peek();
         if (methodScope.methodParameters.contains(name)) {
-            throw new IllegalSjavaFileException(
-                    "Duplicate parameter name: " + name, currentLine);
+            throw new IllegalSjavaFileException("Duplicate parameter name: " + name, currentLine);
         }
 
         methodScope.methodParameters.add(name);
-        methodScope.variables.put(name,
-                new Variable(type, isFinal, true, currentLine));
+        methodScope.variables.put(name, new Variable(type, isFinal, true, currentLine));
     }
 
-    /**
-     * Declares a variable in the current scope
-     */
+    /** Declares a variable in the current scope */
     public void declareVariable(String name, Types type, boolean isFinal, boolean isInitialized)
-            throws IllegalSjavaFileException {
+    throws IllegalSjavaFileException {
         // Validate variable name doesn't start with double underscore
         if (name.startsWith("__")) {
             throw new IllegalSjavaFileException(
-                    "Variable names cannot start with double underscore: " + name, currentLine);
+                    "Variable names cannot start with double underscore: " + name, currentLine
+            );
         }
 
-        Map<String, Variable> currentScope = scopeStack.isEmpty() ?
-                globalScope : scopeStack.peek().variables;
+        Map<String, Variable> currentScope = scopeStack.isEmpty() ? globalScope : scopeStack.peek().variables;
 
-        // Check for variable redeclaration in current scope
+        // Check for variable redeclaration in the current scope
         if (currentScope.containsKey(name)) {
             throw new IllegalSjavaFileException(
-                    "Variable already declared in current scope: " + name, currentLine);
+                    "Variable already declared in current scope: " + name, currentLine
+            );
         }
 
         // For global variables, ensure no other global has the same name
         if (currentScope == globalScope) {
             Variable existing = findVariable(name);
             if (existing != null) {
-                throw new IllegalSjavaFileException(
-                        "Global variable name conflict: " + name, currentLine);
+                throw new IllegalSjavaFileException("Global variable name conflict: " + name, currentLine);
             }
         }
 
-        // Add the variable to current scope
-        currentScope.put(name,
-                new Variable(type, isFinal, isInitialized, currentLine));
+        // Add the variable to the current scope
+        currentScope.put(name, new Variable(type, isFinal, isInitialized, currentLine));
     }
 
-    /**
-     * Validates variable assignment
-     */
+    /** Validates variable assignment */
     public void validateAssignment(String name) throws IllegalSjavaFileException {
         Variable var = findVariable(name);
         if (var == null) {
-            throw new IllegalSjavaFileException(
-                    "Variable not declared: " + name, currentLine);
+            throw new IllegalSjavaFileException("Variable not declared: " + name, currentLine);
         }
-
         if (var.isFinal && var.isInitialized) {
-            throw new IllegalSjavaFileException(
-                    "Cannot reassign final variable: " + name, currentLine);
+            throw new IllegalSjavaFileException("Cannot reassign final variable: " + name, currentLine);
         }
-
         var.isInitialized = true;
     }
 
-    /**
-     * Validates variable access and returns its type
-     */
+    /** Validates variable access and returns its type */
     public Types getVariableType(String name) throws IllegalSjavaFileException {
         Variable var = findVariable(name);
         if (var == null) {
-            throw new IllegalSjavaFileException(
-                    "Variable not declared: " + name, currentLine);
+            throw new IllegalSjavaFileException("Variable not declared: " + name, currentLine);
         }
-
         // For local variables, check initialization
         if (!isGlobalVariable(name) && !var.isInitialized) {
-            throw new IllegalSjavaFileException(
-                    "Local variable not initialized: " + name, currentLine);
+            throw new IllegalSjavaFileException("Local variable not initialized: " + name, currentLine);
         }
-
         return var.type;
     }
 
-    /**
-     * Checks if currently in a method scope
-     */
+    /** Checks if currently in a method scope */
     public boolean isInMethod() {
         return inMethod;
     }
 
-    /**
-     * Checks if the current scope is a method's outermost scope
-     */
+    /** Checks if the current scope is a method's outermost scope */
     public boolean isMethodEnd() {
         return !scopeStack.isEmpty() && scopeStack.peek().isMethodScope;
     }
 
-    /**
-     * Finds a variable in the current scope chain
-     */
+    /** Finds a variable in the current scope chain */
     private Variable findVariable(String name) {
         // Check local scopes from innermost to outermost
         for (Scope scope : scopeStack) {
@@ -215,16 +190,12 @@ public class ScopeValidator {
         return globalScope.get(name);
     }
 
-    /**
-     * Checks if a variable is in the global scope
-     */
+    /** Checks if a variable is in the global scope */
     private boolean isGlobalVariable(String name) {
         return globalScope.containsKey(name);
     }
 
-    /**
-     * Resets the validator state
-     */
+    /** Resets the validator state */
     public void reset() {
         globalScope.clear();
         scopeStack.clear();

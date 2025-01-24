@@ -16,13 +16,11 @@ public class LineParser extends BaseParser {
     private static final String RETURN_PATTERN = "^\\s*return\\s*;\\s*$";
     private static final String BLOCK_START_PATTERN = "^\\s*(if|while)\\s*\\([^)]+\\)\\s*\\{\\s*$";
     private static final String BLOCK_END_PATTERN = "^\\s*}\\s*$";
-    private static final String VARIABLE_ASSIGNMENT_PATTERN =
-            "^\\s*" + IDENTIFIER + "\\s*=\\s*.+;\\s*$";
-    private static final String METHOD_CALL_PATTERN =
-            "^\\s*" + IDENTIFIER + "\\s*\\([^)]*\\)\\s*;\\s*$";
-    private static final String VALID_COMMENT_PATTERN = "^//.*$";  // No spaces before //
-    private static final String COMMENT_WITH_SPACES_PATTERN = "^\\s+//.*$";  // To explicitly catch invalid comments
-
+    private static final String VARIABLE_ASSIGNMENT_PATTERN = "^\\s*" + IDENTIFIER + "\\s*=\\s*.+;\\s*$";
+    private static final String METHOD_CALL_PATTERN = "^\\s*" + IDENTIFIER + "\\s*\\([^)]*\\)\\s*;\\s*$";
+    private static final String VALID_COMMENT_PATTERN = "^//.*$";  // No spaces before
+    // To explicitly catch invalid comments
+    private static final String COMMENT_WITH_SPACES_PATTERN = "^\\s+//.*$";
 
     /** Represents different types of lines in s-Java */
     public enum LineType {
@@ -38,7 +36,7 @@ public class LineParser extends BaseParser {
         INVALID
     }
 
-    Map<String, LineType> map = Map.of(
+    private final Map<String, LineType> map = Map.of(
             EMPTY_LINE_PATTERN, LineType.EMPTY,
             COMMENT_PATTERN, LineType.COMMENT,
             METHOD_PATTERN, LineType.METHOD_DECLARATION,
@@ -48,7 +46,6 @@ public class LineParser extends BaseParser {
             BLOCK_START_PATTERN, LineType.BLOCK_START,
             BLOCK_END_PATTERN, LineType.BLOCK_END,
             METHOD_CALL_PATTERN, LineType.METHOD_CALL
-
     );
 
     /**
@@ -59,7 +56,7 @@ public class LineParser extends BaseParser {
      */
     public LineType getLineType(String line) {
         for (Map.Entry<String, LineType> entry : map.entrySet()) {
-            if(Pattern.matches(entry.getKey(), line)) {
+            if (Pattern.matches(entry.getKey(), line)) {
                 return entry.getValue();
             }
         }

@@ -8,22 +8,12 @@ import java.util.regex.Pattern;
 public class VariableParser extends BaseParser {
     // Regex for variable name according to s-Java specs
     private static final String VARIABLE_NAME = "(?:[a-zA-Z]\\w*|_[a-zA-Z0-9]\\w*)";  // Added grouping ()
-//    private static final String DECLARATION_PATTERN =
-//        "^\\s*(final\\s+)?(" + String.join("|", LEGAL_TYPES) + ")\\s+" +
-//                "(" + VARIABLE_NAME + "(?:\\s*=\\s*[+-]?[^,;]+)?\\s*" +
-//                "(?:,\\s*" + VARIABLE_NAME + "(?:\\s*=\\s*[+-]?[^,;]+)?\\s*)*)" +
-//                "\\s*;\\s*$";
     // Updated declaration pattern to allow for multiple declarations on the same line
-//    private static final String DECLARATION_PATTERN =
-//            "^\\s*(final\\s+)?(" + String.join("|", LEGAL_TYPES) + ")\\s+" +
-//                    "(" + VARIABLE_NAME + "(?:\\s*=\\s*[^,;]+)?" +
-//                    "(?:\\s*,\\s*" + VARIABLE_NAME + "(?:\\s*=\\s*[^,;]+)?)*)" +
-//                    "\\s*;\\s*$";
     private static final String DECLARATION_PATTERN =
             "^\\s*(final\\s+)?(" + String.join("|", LEGAL_TYPES) + ")\\s+" +
-                    "(" + VARIABLE_NAME + "(?:\\s*=\\s*[^,;]+)?" +
-                    "(?:\\s*,\\s*" + VARIABLE_NAME + "(?:\\s*=\\s*[^,;]+)?)*)" +
-                    "\\s*;\\s*$";
+            "(" + VARIABLE_NAME + "(?:\\s*=\\s*[^,;]+)?" +
+            "(?:\\s*,\\s*" + VARIABLE_NAME + "(?:\\s*=\\s*[^,;]+)?)*)" +
+            "\\s*;\\s*$";
 
     /**
      * Validates a variable declaration line according to s-Java rules
@@ -33,7 +23,6 @@ public class VariableParser extends BaseParser {
      */
     public void validateDeclaration(String line) throws IllegalSjavaFileException {
         if (!Pattern.matches(DECLARATION_PATTERN, line)) {
-//            System.out.println("Pattern: " + DECLARATION_PATTERN);
             throw new IllegalSjavaFileException("Invalid variable declaration format", -1);
         }
 
