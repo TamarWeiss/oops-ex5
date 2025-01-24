@@ -42,11 +42,11 @@ public class LineParser extends BaseParser {
             EMPTY_LINE_PATTERN, LineType.EMPTY,
             COMMENT_PATTERN, LineType.COMMENT,
             METHOD_PATTERN, LineType.METHOD_DECLARATION,
+            VARIABLE_ASSIGNMENT_PATTERN, LineType.VARIABLE_ASSIGNMENT,
             VARIABLE_PATTERN, LineType.VARIABLE_DECLARATION,
             RETURN_PATTERN, LineType.RETURN_STATEMENT,
             BLOCK_START_PATTERN, LineType.BLOCK_START,
             BLOCK_END_PATTERN, LineType.BLOCK_END,
-            VARIABLE_ASSIGNMENT_PATTERN, LineType.VARIABLE_ASSIGNMENT,
             METHOD_CALL_PATTERN, LineType.METHOD_CALL
 
     );
@@ -86,6 +86,7 @@ public class LineParser extends BaseParser {
                 }
                 break;
             case VARIABLE_DECLARATION:
+            case VARIABLE_ASSIGNMENT:
             case RETURN_STATEMENT:
                 if (!line.trim().endsWith(";")) {
                     throw new IllegalSjavaFileException("Missing semicolon at line end", -1);

@@ -194,24 +194,27 @@ public class ValidationManager {
             }
 
             String varName = matcher.group(1);
-            String value = matcher.group(2);
+            String value = matcher.group(2).trim();
+            if (value.endsWith(";")) {
+                value = value.substring(0, value.length() - 1).trim();
+            }
 
             Types varType = scopeValidator.getVariableType(varName);
 
-            // Validate value type compatibility
-            if (value.matches("\\w+")) {
-                // Assignment from another variable
+            try {
+                // Try to validate as identifier first
+                variableParser.validateIdentifier(value);
+                // If it's a valid identifier, check type compatibility
                 Types valueType = scopeValidator.getVariableType(value);
                 typeValidator.validateTypeCompatibility(varType, valueType);
-            } else {
-                // Assignment from literal
+            } catch (IllegalSjavaFileException e) {
+                // Not a valid identifier, try as literal
                 typeValidator.validateLiteralType(varType, value);
             }
 
             scopeValidator.validateAssignment(varName);
         }
     }
-
     /**
      * Processes block starts (if/while)
      */

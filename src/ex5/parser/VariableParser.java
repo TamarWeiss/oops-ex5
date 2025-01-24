@@ -14,6 +14,11 @@ public class VariableParser extends BaseParser {
 //                "(?:,\\s*" + VARIABLE_NAME + "(?:\\s*=\\s*[+-]?[^,;]+)?\\s*)*)" +
 //                "\\s*;\\s*$";
     // Updated declaration pattern to allow for multiple declarations on the same line
+//    private static final String DECLARATION_PATTERN =
+//            "^\\s*(final\\s+)?(" + String.join("|", LEGAL_TYPES) + ")\\s+" +
+//                    "(" + VARIABLE_NAME + "(?:\\s*=\\s*[^,;]+)?" +
+//                    "(?:\\s*,\\s*" + VARIABLE_NAME + "(?:\\s*=\\s*[^,;]+)?)*)" +
+//                    "\\s*;\\s*$";
     private static final String DECLARATION_PATTERN =
             "^\\s*(final\\s+)?(" + String.join("|", LEGAL_TYPES) + ")\\s+" +
                     "(" + VARIABLE_NAME + "(?:\\s*=\\s*[^,;]+)?" +
