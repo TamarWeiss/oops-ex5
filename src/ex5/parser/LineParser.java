@@ -23,6 +23,7 @@ public class LineParser extends BaseParser {
     private static final String VALID_COMMENT_PATTERN = "^//.*$";  // No spaces before //
     private static final String COMMENT_WITH_SPACES_PATTERN = "^\\s+//.*$";  // To explicitly catch invalid comments
 
+
     /** Represents different types of lines in s-Java */
     public enum LineType {
         METHOD_DECLARATION,
@@ -91,6 +92,7 @@ public class LineParser extends BaseParser {
                 }
                 break;
             case COMMENT:
+                break; // No validation needed for comments
             case EMPTY:
                 break; // No validation needed for these types
             default:

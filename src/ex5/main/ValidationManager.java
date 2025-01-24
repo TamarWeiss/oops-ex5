@@ -112,27 +112,98 @@ public class ValidationManager {
     /**
      * Processes variable declarations
      */
+//    private void processVariableDeclaration(String line) throws IllegalSjavaFileException {
+//        variableParser.validateDeclaration(line);
+//
+//        // Handle multiple variable declarations
+//        String[] declarations = line.substring(0, line.length() - 1).split(",");
+//        boolean isFinal = line.trim().startsWith("final");
+//
+//        for (String declaration : declarations) {
+//            String[] parts = declaration.trim().split("=");
+//            String[] typeAndName = parts[0].trim().split("\\s+");
+//
+//            // Handle final modifier in type extraction
+//            int typeIndex = isFinal ? 1 : 0;
+//            //Types type = Types.getType(typeAndName[typeIndex]); - changed to see if fixed
+////            Types type = Types.getType(typeAndName[0]);
+//            Types type = Types.getType(typeAndName[isFinal ? 1 : 0]);
+//
+//            String name = typeAndName[typeAndName.length - 1];
+//            boolean isInitialized = parts.length > 1;
+//
+//            // If initialized, validate the value
+//            if (isInitialized) {
+//                String value = parts[1].trim();
+//                typeValidator.validateLiteralType(type, value);
+//            }
+//
+//            scopeValidator.declareVariable(name, type, isFinal, isInitialized);
+//        }
+//    }
+    // new code
     private void processVariableDeclaration(String line) throws IllegalSjavaFileException {
         variableParser.validateDeclaration(line);
 
         // Handle multiple variable declarations
         String[] declarations = line.substring(0, line.length() - 1).split(",");
-        boolean isFinal = line.trim().startsWith("final");
+        String firstDec = declarations[0].trim();
+        boolean isFinal = firstDec.startsWith("final");
 
-        for (String declaration : declarations) {
-            String[] parts = declaration.trim().split("=");
-            String[] typeAndName = parts[0].trim().split("\\s+");
+        // Extract type correctly
+        String typeData = firstDec;
+        if (isFinal) {
+            typeData = firstDec.substring(5).trim();
+        }
 
-            // Handle final modifier in type extraction
-            int typeIndex = isFinal ? 1 : 0;
-            Types type = Types.getType(typeAndName[typeIndex]);
-            String name = typeAndName[typeAndName.length - 1];
-            boolean isInitialized = parts.length > 1;
+        String[] typeAndName = typeData.split("\\s+");
+        Types type = Types.getType(typeAndName[0]);
 
-            // If initialized, validate the value
+        // Process each declaration
+        for (int i = 0; i < declarations.length; i++) {
+            String declaration = declarations[i].trim();
+            String name;
+            boolean isInitialized;
+            String value = null;
+
+            if (i == 0) {
+                // First declaration
+                name = typeAndName[1];
+                isInitialized = declaration.contains("=");
+                if (isInitialized) {
+                    value = declaration.substring(declaration.indexOf('=') + 1).trim();
+                    if (value.endsWith(";")) {
+                        value = value.substring(0, value.length() - 1).trim();
+                    }
+                }
+            } else {
+                // Subsequent declarations
+                String[] parts = declaration.split("=");
+                name = parts[0].trim();
+                isInitialized = parts.length > 1;
+                if (isInitialized) {
+                    value = parts[1].trim();
+                    if (value.endsWith(";")) {
+                        value = value.substring(0, value.length() - 1).trim();
+                    }
+                }
+            }
+
+            if (isFinal && !isInitialized) {
+                throw new IllegalSjavaFileException("Final variable must be initialized: " + name, currentLine);
+            }
+
             if (isInitialized) {
-                String value = parts[1].trim();
-                typeValidator.validateLiteralType(type, value);
+                try {
+                    // Try to validate as identifier first
+                    variableParser.validateIdentifier(value);  // use existing value variable
+                    // If it's a valid identifier, check type compatibility
+                    Types valueType = scopeValidator.getVariableType(value);
+                    typeValidator.validateTypeCompatibility(type, valueType);
+                } catch (IllegalSjavaFileException e) {
+                    // Not a valid identifier, try as literal
+                    typeValidator.validateLiteralType(type, value);
+                }
             }
 
             scopeValidator.declareVariable(name, type, isFinal, isInitialized);

@@ -26,7 +26,7 @@ public abstract class BaseParser {
      * @param identifier The identifier to validate
      * @throws IllegalSjavaFileException if the identifier is invalid
      */
-    protected void validateIdentifier(String identifier) throws IllegalSjavaFileException {
+    public void validateIdentifier(String identifier) throws IllegalSjavaFileException {
         if (identifier == null || identifier.isEmpty()) {
             throw new IllegalSjavaFileException("Empty identifier", -1);
         }
