@@ -9,8 +9,7 @@ import java.util.regex.Pattern;
 public class LineParser extends BaseParser {
     // Line type patterns
     private static final String METHOD_PATTERN = "^\\s*void\\s+" + IDENTIFIER + "\\s*\\([^)]*\\)\\s*\\{\\s*$";
-    private static final String VARIABLE_PATTERN =
-            "^\\s*(final\\s+)?(" + String.join("|", LEGAL_TYPES) + ")\\s+.*";
+    private static final String VARIABLE_PATTERN = "^\\s*(final\\s+)?(" + Types.LEGAL_TYPES + ")\\s+.*";
     private static final String COMMENT_PATTERN = "^\\s*//.*";
     private static final String EMPTY_LINE_PATTERN = "^\\s*$";
     private static final String RETURN_PATTERN = "^\\s*return\\s*;\\s*$";
@@ -67,6 +66,7 @@ public class LineParser extends BaseParser {
      * Validates that a line ends properly, according to s-Java rules
      *
      * @param line The line to validate
+     * @param type the line's type
      * @throws IllegalSjavaFileException if the line ending is invalid
      */
     public void validateLineEnding(String line, LineType type) throws IllegalSjavaFileException {

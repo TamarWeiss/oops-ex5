@@ -23,7 +23,7 @@ public class FileProcessor {
      * Constructor for FileProcessor
      *
      * @param filename The name of the file to process
-     * @throws IOSjavaException if the filename is invalid
+     * @throws IOSjavaException if the file's name is invalid
      */
     public FileProcessor(String filename) throws IOSjavaException {
         validateFileName(filename);
@@ -59,7 +59,12 @@ public class FileProcessor {
         }
     }
 
-    /** Validates the filename has the correct extension */
+    /**
+     * Validates the filename has the correct extension
+     *
+     * @param filename the file's name
+     * @throws IOSjavaException if the file's name is invalid
+     */
     private void validateFileName(String filename) throws IOSjavaException {
         if (filename == null || !filename.endsWith(SJAVA_EXTENSION)) {
             throw new IOSjavaException("File must end with " + SJAVA_EXTENSION);

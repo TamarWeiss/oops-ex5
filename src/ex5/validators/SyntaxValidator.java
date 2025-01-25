@@ -1,6 +1,7 @@
 package ex5.validators;
 
 import ex5.IllegalSjavaFileException;
+import ex5.parser.Types;
 
 import java.util.regex.Pattern;
 
@@ -9,9 +10,8 @@ public class SyntaxValidator {
     // Patterns for syntax validation
     private static final String VALID_COMMENT = "^\\s*//.*$";
     private static final String INVALID_COMMENT = "/\\*|\\*/|^\\s+//";
-    private static final String REQUIRED_WHITESPACE =
-            "(?:void|final|int|double|String|boolean|char)(?!\\s+)\\w+";
-    private static final String MISSING_REQUIRED_SPACE = "(void|final|int|double|String|boolean|char)(\\w+)";
+    private static final String REQUIRED_WHITESPACE = "(?:void|final|" + Types.LEGAL_TYPES + ")(?!\\s+)\\w+";
+    private static final String MISSING_REQUIRED_SPACE = "(void|final|" + Types.LEGAL_TYPES + ")(\\w+)";
 
     /**
      * Validates general line syntax
