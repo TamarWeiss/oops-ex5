@@ -53,7 +53,11 @@ public class ScopeValidator {
         this.currentLine = 0;
     }
 
-    /** Sets the current line number for better error reporting */
+    /**
+     * Sets the current line number for better error reporting
+     *
+     * @param lineNumber the current line number
+     */
     public void setCurrentLine(int lineNumber) {
         this.currentLine = lineNumber;
     }
@@ -62,6 +66,7 @@ public class ScopeValidator {
      * Enters a new scope (method or block)
      *
      * @param isMethodScope true if this is a method scope, false for block scope
+     * @throws IllegalSjavaFileException if the maximum nesting level is exceeded
      */
     public void enterScope(boolean isMethodScope) throws IllegalSjavaFileException {
         nestingLevel++;
@@ -78,6 +83,7 @@ public class ScopeValidator {
      * Exits the current scope
      *
      * @param isMethodEnd true if this is ending a method, false for block
+     * @throws IllegalSjavaFileException for invalid or mismatched scope end
      */
     public void exitScope(boolean isMethodEnd) throws IllegalSjavaFileException {
         nestingLevel--;
@@ -94,7 +100,14 @@ public class ScopeValidator {
         }
     }
 
-    /** Declares a method parameter */
+    /**
+     * Declares a method parameter
+     *
+     * @param name    the parameter's name
+     * @param type    the parameter's type
+     * @param isFinal if the parameter is final
+     * @throws IllegalSjavaFileException invalid parameter declaration
+     */
     public void declareParameter(String name, Types type, boolean isFinal) throws IllegalSjavaFileException {
         if (scopeStack.isEmpty() || !scopeStack.peek().isMethodScope) {
             throw new IllegalSjavaFileException(
@@ -111,7 +124,15 @@ public class ScopeValidator {
         methodScope.variables.put(name, new Variable(type, isFinal, true, currentLine));
     }
 
-    /** Declares a variable in the current scope */
+    /**
+     * Declares a variable in the current scope
+     *
+     * @param name          the variable's name
+     * @param type          the variable's type
+     * @param isFinal       if the variable is final
+     * @param isInitialized if the variable is initialized
+     * @throws IllegalSjavaFileException for invalid variable declaration
+     */
     public void declareVariable(String name, Types type, boolean isFinal, boolean isInitialized)
     throws IllegalSjavaFileException {
         // Validate variable name doesn't start with double underscore
@@ -142,7 +163,12 @@ public class ScopeValidator {
         currentScope.put(name, new Variable(type, isFinal, isInitialized, currentLine));
     }
 
-    /** Validates variable assignment */
+    /**
+     * Validates variable assignment
+     *
+     * @param name the variable's name
+     * @throws IllegalSjavaFileException if the variable could not be assigned properly
+     */
     public void validateAssignment(String name) throws IllegalSjavaFileException {
         Variable var = findVariable(name);
         if (var == null) {
@@ -154,7 +180,13 @@ public class ScopeValidator {
         var.isInitialized = true;
     }
 
-    /** Validates variable access and returns its type */
+    /**
+     * Validates variable access and returns its type
+     *
+     * @param name the variable's name
+     * @return the variable's type
+     * @throws IllegalSjavaFileException if the variable is not declared or found
+     */
     public Types getVariableType(String name) throws IllegalSjavaFileException {
         Variable var = findVariable(name);
         if (var == null) {
@@ -167,17 +199,30 @@ public class ScopeValidator {
         return var.type;
     }
 
-    /** Checks if currently in a method scope */
+    /**
+     * Checks if currently in a method scope
+     *
+     * @return True if currently inside a method
+     */
     public boolean isInMethod() {
         return inMethod;
     }
 
-    /** Checks if the current scope is a method's outermost scope */
+    /**
+     * Checks if the current scope is a method's outermost scope
+     *
+     * @return true if we reached the method's end
+     */
     public boolean isMethodEnd() {
         return !scopeStack.isEmpty() && scopeStack.peek().isMethodScope;
     }
 
-    /** Finds a variable in the current scope chain */
+    /**
+     * Finds a variable in the current scope chain
+     *
+     * @param name the variable's name
+     * @return the variable with said name if present, null otherwise
+     */
     private Variable findVariable(String name) {
         // Check local scopes from innermost to outermost
         for (Scope scope : scopeStack) {
@@ -190,7 +235,12 @@ public class ScopeValidator {
         return globalScope.get(name);
     }
 
-    /** Checks if a variable is in the global scope */
+    /**
+     * Checks if a variable is in the global scope
+     *
+     * @param name the variable's name
+     * @return true of the variable is global
+     */
     private boolean isGlobalVariable(String name) {
         return globalScope.containsKey(name);
     }

@@ -40,7 +40,13 @@ public class ValidationManager {
         this.lastLineWasReturn = false;
     }
 
-    /** Validates a single line of code through the complete validation chain */
+    /**
+     * Validates a single line of code through the complete validation chain
+     *
+     * @param line       the aforementioned line of code
+     * @param lineNumber the line's number
+     * @throws IllegalSjavaFileException if the line isn't formatted correctly
+     */
     public void validateLine(String line, int lineNumber) throws IllegalSjavaFileException {
         this.currentLine = lineNumber;
         scopeValidator.setCurrentLine(lineNumber);
@@ -65,9 +71,7 @@ public class ValidationManager {
                 case BLOCK_END -> processBlockEnd();
                 case RETURN_STATEMENT -> processReturnStatement(line);
                 case METHOD_CALL -> processMethodCall(line);
-                case INVALID -> throw new IllegalSjavaFileException(
-                        "Invalid line format", currentLine
-                );
+                case INVALID -> throw new IllegalSjavaFileException("Invalid line format", currentLine);
             }
 
             // Update return tracking for method validation
@@ -80,7 +84,12 @@ public class ValidationManager {
         }
     }
 
-    /** Processes method declarations */
+    /**
+     * Processes method declarations
+     *
+     * @param line A single line of code
+     * @throws IllegalSjavaFileException if a nested method declaration occurred
+     */
     private void processMethodDeclaration(String line) throws IllegalSjavaFileException {
         if (!isInMethod()) {
             methodParser.validateMethodDeclaration(line);
@@ -95,7 +104,6 @@ public class ValidationManager {
 
                 Types type = Types.getType(paramParts[typeIndex]);
                 String name = paramParts[typeIndex + 1];
-
                 scopeValidator.declareParameter(name, type, isFinal);
             }
         }
@@ -104,7 +112,12 @@ public class ValidationManager {
         }
     }
 
-    /** Processes variable declarations */
+    /**
+     * Processes variable declarations
+     *
+     * @param line a single line of code
+     * @throws IllegalSjavaFileException for invalid variable declaration
+     */
     private void processVariableDeclaration(String line) throws IllegalSjavaFileException {
         variableParser.validateDeclaration(line);
 
@@ -176,7 +189,12 @@ public class ValidationManager {
         }
     }
 
-    /** Processes variable assignments */
+    /**
+     * Processes variable assignments
+     *
+     * @param line a single line of code
+     * @throws IllegalSjavaFileException if the assignment format is invalid
+     */
     private void processVariableAssignment(String line) throws IllegalSjavaFileException {
         String[] assignments = line.substring(0, line.length() - 1).split(",");
 
@@ -209,7 +227,12 @@ public class ValidationManager {
         }
     }
 
-    /** Processes block starts (if/while) */
+    /**
+     * Processes block starts (if/while)
+     *
+     * @param line a single line of code
+     * @throws IllegalSjavaFileException if the block statement isn't formatted correctly
+     */
     private void processBlockStart(String line) throws IllegalSjavaFileException {
         if (!isInMethod()) {
             throw new IllegalSjavaFileException("Block statement outside method", currentLine);
@@ -225,7 +248,11 @@ public class ValidationManager {
         scopeValidator.enterScope(false);
     }
 
-    /** Processes block ends */
+    /**
+     * Processes block ends
+     *
+     * @throws IllegalSjavaFileException if the block's end isn't formatted correctly
+     */
     private void processBlockEnd() throws IllegalSjavaFileException {
         boolean isMethodEnd = scopeValidator.isMethodEnd();
         if (isMethodEnd && !lastLineWasReturn) {
@@ -234,7 +261,12 @@ public class ValidationManager {
         scopeValidator.exitScope(isMethodEnd);
     }
 
-    /** Processes return statements */
+    /**
+     * Processes return statements
+     *
+     * @param line a single line of code
+     * @throws IllegalSjavaFileException if the return statement is invalid
+     */
     private void processReturnStatement(String line) throws IllegalSjavaFileException {
         if (!isInMethod()) {
             throw new IllegalSjavaFileException("Return statement outside method", currentLine);
@@ -245,7 +277,12 @@ public class ValidationManager {
         }
     }
 
-    /** Processes method calls */
+    /**
+     * Processes method calls
+     *
+     * @param line a single line of code
+     * @throws IllegalSjavaFileException if the method call is invalid
+     */
     private void processMethodCall(String line) throws IllegalSjavaFileException {
         if (!isInMethod()) {
             throw new IllegalSjavaFileException("Method call outside method body", currentLine);
@@ -253,7 +290,12 @@ public class ValidationManager {
         methodParser.validateMethodCall(line);
     }
 
-    /** Validates conditions in if/while statements */
+    /**
+     * Validates conditions in if/while statements
+     *
+     * @param condition a string representing a condition
+     * @throws IllegalSjavaFileException if the condition isn't formatted properly
+     */
     private void validateCondition(String condition) throws IllegalSjavaFileException {
         // Handle boolean literals
         if (condition.equals("true") || condition.equals("false")) {
@@ -273,7 +315,11 @@ public class ValidationManager {
         typeValidator.validateConditionType(type);
     }
 
-    /** Get current method status */
+    /**
+     * Get current method status
+     *
+     * @return the current method status
+     */
     public boolean isInMethod() {
         return scopeValidator.isInMethod();
     }
@@ -284,5 +330,4 @@ public class ValidationManager {
         lastLineWasReturn = false;
         scopeValidator.reset();
     }
-
 }
