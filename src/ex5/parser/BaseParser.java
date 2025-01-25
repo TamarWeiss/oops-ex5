@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 public abstract class BaseParser {
     // Common regex patterns
     protected static final String WHITESPACE = "\\s*";
-    protected static final String IDENTIFIER = "([a-zA-Z][a-zA-Z0-9_]*|_[a-zA-Z0-9][a-zA-Z0-9_]*)";
+    protected static final String IDENTIFIER = "([a-zA-Z]\\w*|_[a-zA-Z\\d]\\w*)";
     protected static final String FINAL = "final";
 
     /**
