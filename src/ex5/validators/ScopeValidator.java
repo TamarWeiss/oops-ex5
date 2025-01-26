@@ -136,10 +136,10 @@ public class ScopeValidator {
 
         // For global variables, ensure no other global has the same name
         if (currentScope == globalScope) {
-            Variable existing = findVariable(name);
-            if (existing != null) {
+            try {
+                findVariable(name);
                 throw new IllegalSjavaFileException("Global variable name conflict: " + name);
-            }
+            } catch (IllegalSjavaFileException ignored) { } //no global conflict found, continue
         }
 
         // Add the variable to the current scope
@@ -154,9 +154,6 @@ public class ScopeValidator {
      */
     public void validateAssignment(String name) throws IllegalSjavaFileException {
         Variable var = findVariable(name);
-        if (var == null) {
-            throw new IllegalSjavaFileException("Variable not declared: " + name);
-        }
         if (var.isFinal && var.isInitialized) {
             throw new IllegalSjavaFileException("Cannot reassign final variable: " + name);
         }
@@ -166,27 +163,17 @@ public class ScopeValidator {
     /**
      * Validates variable access and returns its type
      *
-     * @param name            the variable's name
+     * @param name the variable's name
      * @return the variable's type
      * @throws IllegalSjavaFileException if said variable is not declared prior,
      *                                   or improper use of uninitialized variable
      */
     public Types getVariableType(String name) throws IllegalSjavaFileException {
-        Variable var = findVariable(name);
-        if (var == null) {
-            throw new IllegalSjavaFileException("Variable not declared: " + name);
-        }
-        return var.type;
+        return findVariable(name).type;
     }
 
     public void validateVariableInitialization(String name) throws IllegalSjavaFileException {
-        Variable var = findVariable(name);
-
-        if (var == null) {
-            throw new IllegalSjavaFileException("Variable not declared: " + name);
-        }
-
-        if (!var.isInitialized) {
+        if (!findVariable(name).isInitialized) {
             throw new IllegalSjavaFileException("Local variable " + name + " not initialized");
         }
     }
@@ -215,16 +202,20 @@ public class ScopeValidator {
      * @param name the variable's name
      * @return the variable with said name if present, null otherwise
      */
-    private Variable findVariable(String name) {
+    private Variable findVariable(String name) throws IllegalSjavaFileException {
         // Check local scopes from innermost to outermost
+        Variable var;
         for (Scope scope : scopeStack) {
-            Variable var = scope.variables.get(name);
-            if (var != null) {
+            if ((var = scope.variables.get(name)) != null) {
                 return var;
             }
         }
+
         // Check global scope
-        return globalScope.get(name);
+        if ((var = globalScope.get(name)) == null) {
+            throw new IllegalSjavaFileException("Variable not declared: " + name);
+        }
+        return var;
     }
 
     /**
