@@ -71,7 +71,7 @@ public class ScopeValidator {
     public void enterScope(boolean isMethodScope) throws IllegalSjavaFileException {
         nestingLevel++;
         if (nestingLevel > MAX_NESTING_LEVEL) {
-            throw new IllegalSjavaFileException("Maximum nesting level exceeded", currentLine);
+            throw new IllegalSjavaFileException("Maximum nesting level exceeded");
         }
         if (isMethodScope) {
             inMethod = true;
@@ -88,13 +88,13 @@ public class ScopeValidator {
     public void exitScope(boolean isMethodEnd) throws IllegalSjavaFileException {
         nestingLevel--;
         if (scopeStack.isEmpty()) {
-            throw new IllegalSjavaFileException("Unexpected scope end", currentLine);
+            throw new IllegalSjavaFileException("Unexpected scope end");
         }
 
         Scope scope = scopeStack.pop();
         if (isMethodEnd) {
             if (!scope.isMethodScope) {
-                throw new IllegalSjavaFileException("Mismatched scope end", currentLine);
+                throw new IllegalSjavaFileException("Mismatched scope end");
             }
             inMethod = false;
         }
@@ -111,13 +111,13 @@ public class ScopeValidator {
     public void declareParameter(String name, Types type, boolean isFinal) throws IllegalSjavaFileException {
         if (scopeStack.isEmpty() || !scopeStack.peek().isMethodScope) {
             throw new IllegalSjavaFileException(
-                    "Method parameter declaration outside method scope", currentLine
+                    "Method parameter declaration outside method scope"
             );
         }
 
         Scope methodScope = scopeStack.peek();
         if (methodScope.methodParameters.contains(name)) {
-            throw new IllegalSjavaFileException("Duplicate parameter name: " + name, currentLine);
+            throw new IllegalSjavaFileException("Duplicate parameter name: " + name);
         }
 
         methodScope.methodParameters.add(name);
@@ -138,7 +138,7 @@ public class ScopeValidator {
         // Validate variable name doesn't start with double underscore
         if (name.startsWith("__")) {
             throw new IllegalSjavaFileException(
-                    "Variable names cannot start with double underscore: " + name, currentLine
+                    "Variable names cannot start with double underscore: " + name
             );
         }
 
@@ -147,7 +147,7 @@ public class ScopeValidator {
         // Check for variable redeclaration in the current scope
         if (currentScope.containsKey(name)) {
             throw new IllegalSjavaFileException(
-                    "Variable already declared in current scope: " + name, currentLine
+                    "Variable already declared in current scope: " + name
             );
         }
 
@@ -155,7 +155,7 @@ public class ScopeValidator {
         if (currentScope == globalScope) {
             Variable existing = findVariable(name);
             if (existing != null) {
-                throw new IllegalSjavaFileException("Global variable name conflict: " + name, currentLine);
+                throw new IllegalSjavaFileException("Global variable name conflict: " + name);
             }
         }
 
@@ -172,10 +172,10 @@ public class ScopeValidator {
     public void validateAssignment(String name) throws IllegalSjavaFileException {
         Variable var = findVariable(name);
         if (var == null) {
-            throw new IllegalSjavaFileException("Variable not declared: " + name, currentLine);
+            throw new IllegalSjavaFileException("Variable not declared: " + name);
         }
         if (var.isFinal && var.isInitialized) {
-            throw new IllegalSjavaFileException("Cannot reassign final variable: " + name, currentLine);
+            throw new IllegalSjavaFileException("Cannot reassign final variable: " + name);
         }
         var.isInitialized = true;
     }
@@ -190,11 +190,11 @@ public class ScopeValidator {
     public Types getVariableType(String name) throws IllegalSjavaFileException {
         Variable var = findVariable(name);
         if (var == null) {
-            throw new IllegalSjavaFileException("Variable not declared: " + name, currentLine);
+            throw new IllegalSjavaFileException("Variable not declared: " + name);
         }
         // For local variables, check initialization
         if (!isGlobalVariable(name) && !var.isInitialized) {
-            throw new IllegalSjavaFileException("Local variable not initialized: " + name, currentLine);
+            throw new IllegalSjavaFileException("Local variable not initialized: " + name);
         }
         return var.type;
     }

@@ -3,9 +3,7 @@ package ex5.parser;
 import ex5.IllegalSjavaFileException;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,20 +26,20 @@ public class MethodParser extends BaseParser {
     public void validateMethodDeclaration(String line) throws IllegalSjavaFileException {
         Matcher matcher = Pattern.compile(METHOD_PATTERN).matcher(line);
         if (!matcher.matches()) {
-            throw new IllegalSjavaFileException("Invalid method declaration format", -1);
+            throw new IllegalSjavaFileException("Invalid method declaration format");
         }
 
         String methodName = matcher.group(1);
 
         // Check for method overloading (not allowed in s-Java)
         if (methodNames.contains(methodName)) {
-            throw new IllegalSjavaFileException("Method overloading is not allowed: " + methodName, -1);
+            throw new IllegalSjavaFileException("Method overloading is not allowed: " + methodName);
         }
         methodNames.add(methodName);
 
         // Validate method name (must start with a letter)
         if (!methodName.matches("^[a-zA-Z]\\w*$")) {
-            throw new IllegalSjavaFileException("Invalid method name: " + methodName, -1);
+            throw new IllegalSjavaFileException("Invalid method name: " + methodName);
         }
 
         // Validate parameters if present
@@ -65,14 +63,14 @@ public class MethodParser extends BaseParser {
 
             // Check for 2 or 3 parts (final modifier is optional)
             if (parts.length < 2 || parts.length > 3) {
-                throw new IllegalSjavaFileException("Invalid parameter format: " + param, -1);
+                throw new IllegalSjavaFileException("Invalid parameter format: " + param);
             }
 
             int typeIndex = parts.length == 3 ? 1 : 0;
 
             // Validate final modifier if present
             if (parts.length == 3 && !parts[0].equals("final")) {
-                throw new IllegalSjavaFileException("Invalid parameter modifier: " + parts[0], -1);
+                throw new IllegalSjavaFileException("Invalid parameter modifier: " + parts[0]);
             }
 
             // Validate type
@@ -118,23 +116,7 @@ public class MethodParser extends BaseParser {
 
         // Basic format check
         if (!line.matches(IDENTIFIER + "\\s*\\([^)]*\\)")) {
-            throw new IllegalSjavaFileException("Invalid method call format", -1);
-        }
-    }
-
-    /**
-     * checks if the parameters are valid
-     *
-     * @param params an array of parameters
-     * @throws IllegalSjavaFileException if multiple parameters happen to share a name
-     */
-    private void validateParameterNames(String[] params) throws IllegalSjavaFileException {
-        Set<String> paramNames = new HashSet<>();
-        for (String param : params) {
-            String name = param.trim().split("\\s+")[param.trim().split("\\s+").length - 1];
-            if (!paramNames.add(name)) {
-                throw new IllegalSjavaFileException("Duplicate parameter name: " + name, -1);
-            }
+            throw new IllegalSjavaFileException("Invalid method call format");
         }
     }
 }

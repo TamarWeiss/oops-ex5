@@ -22,23 +22,23 @@ public class SyntaxValidator {
     public void validateLineSyntax(String line) throws IllegalSjavaFileException {
         // Check for illegal comment styles
         if (line.contains("/*") || line.contains("*/")) {
-            throw new IllegalSjavaFileException("Multi-line comments are not allowed", -1);
+            throw new IllegalSjavaFileException("Multi-line comments are not allowed");
         }
 
         // Check for invalid comment placement
         if (Pattern.matches(INVALID_COMMENT, line)) {
-            throw new IllegalSjavaFileException("Invalid comment format", -1);
+            throw new IllegalSjavaFileException("Invalid comment format");
         }
 
         // Check required whitespace after keywords
         if (Pattern.matches(REQUIRED_WHITESPACE, line)) {
-            throw new IllegalSjavaFileException("Missing required whitespace after keyword", -1);
+            throw new IllegalSjavaFileException("Missing required whitespace after keyword");
         }
     }
 
     public void validateRequiredSpaces(String line) throws IllegalSjavaFileException {
         if (line.matches(".*" + MISSING_REQUIRED_SPACE + ".*")) {
-            throw new IllegalSjavaFileException("Missing required space between type and identifier", -1);
+            throw new IllegalSjavaFileException("Missing required space between type and identifier");
         }
     }
 
@@ -50,7 +50,7 @@ public class SyntaxValidator {
      */
     public void validateCommentSyntax(String line) throws IllegalSjavaFileException {
         if (!Pattern.matches(VALID_COMMENT, line)) {
-            throw new IllegalSjavaFileException("Invalid comment syntax", -1);
+            throw new IllegalSjavaFileException("Invalid comment syntax");
         }
     }
 
@@ -66,18 +66,18 @@ public class SyntaxValidator {
 
         if (isBlockEnd) {
             if (!line.equals("}")) {
-                throw new IllegalSjavaFileException("Block end must be on its own line", -1);
+                throw new IllegalSjavaFileException("Block end must be on its own line");
             }
             return;
         }
 
         if (!line.endsWith(";") && !line.endsWith("{") && !line.endsWith("}")) {
-            throw new IllegalSjavaFileException("Invalid line ending", -1);
+            throw new IllegalSjavaFileException("Invalid line ending");
         }
 
         // Check for closing brace placement
         if (line.endsWith("}") && !line.equals("}")) {
-            throw new IllegalSjavaFileException("Closing brace must be on its own line", -1);
+            throw new IllegalSjavaFileException("Closing brace must be on its own line");
         }
     }
 
@@ -90,7 +90,7 @@ public class SyntaxValidator {
     public void validateNoOperators(String line) throws IllegalSjavaFileException {
         // Check for arithmetic and string operators
         if (line.matches(".*[+\\-*/%].*") && !line.matches(".*['\"].*")) {
-            throw new IllegalSjavaFileException("Operators are not allowed in s-Java", -1);
+            throw new IllegalSjavaFileException("Operators are not allowed in s-Java");
         }
     }
 
@@ -102,7 +102,7 @@ public class SyntaxValidator {
      */
     public void validateNoArrays(String line) throws IllegalSjavaFileException {
         if (line.contains("[") || line.contains("]")) {
-            throw new IllegalSjavaFileException("Arrays are not supported in s-Java", -1);
+            throw new IllegalSjavaFileException("Arrays are not supported in s-Java");
         }
     }
 }

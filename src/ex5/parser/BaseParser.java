@@ -9,10 +9,7 @@ import java.util.regex.Pattern;
  * Contains common functionality and utilities used by specific parsers
  */
 public abstract class BaseParser {
-    // Common regex patterns
-    protected static final String WHITESPACE = "\\s*";
     protected static final String IDENTIFIER = "([a-zA-Z]\\w*|_[a-zA-Z\\d]\\w*)";
-    protected static final String FINAL = "final";
 
     /**
      * Validates that a given identifier follows s-Java naming rules
@@ -22,11 +19,11 @@ public abstract class BaseParser {
      */
     public void validateIdentifier(String identifier) throws IllegalSjavaFileException {
         if (identifier == null || identifier.isEmpty()) {
-            throw new IllegalSjavaFileException("Empty identifier", -1);
+            throw new IllegalSjavaFileException("Empty identifier");
         }
 
         if (!Pattern.matches(IDENTIFIER, identifier)) {
-            throw new IllegalSjavaFileException("Invalid identifier: " + identifier, -1);
+            throw new IllegalSjavaFileException("Invalid identifier: " + identifier);
         }
     }
 }

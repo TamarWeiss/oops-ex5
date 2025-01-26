@@ -51,7 +51,7 @@ public class FileProcessor {
 
             // Check the final state
             if (validationManager.isInMethod()) {
-                throw new IllegalSjavaFileException("Unclosed method block at end of file", lineNumber);
+                throw new IllegalSjavaFileException("Unclosed method block at end of file");
             }
 
         } catch (IOException e) {

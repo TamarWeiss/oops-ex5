@@ -26,8 +26,9 @@ public class ValidationManager {
 
     // Patterns for specific validations
     private static final Pattern CONDITION_PATTERN = Pattern.compile("\\((.*?)\\)");
-    private static final Pattern VARIABLE_ASSIGNMENT_PATTERN =
-            Pattern.compile("^\\s*(\\w+)\\s*=\\s*(.+)\\s*$");
+    private static final Pattern VARIABLE_ASSIGNMENT_PATTERN = Pattern.compile(
+            "^\\s*(\\w+)\\s*=\\s*(.+)\\s*$"
+    );
 
     public ValidationManager() {
         this.lineParser = new LineParser();
@@ -71,7 +72,7 @@ public class ValidationManager {
                 case BLOCK_END -> processBlockEnd();
                 case RETURN_STATEMENT -> processReturnStatement(line);
                 case METHOD_CALL -> processMethodCall(line);
-                case INVALID -> throw new IllegalSjavaFileException("Invalid line format", currentLine);
+                case INVALID -> throw new IllegalSjavaFileException("Invalid line format");
             }
 
             // Update return tracking for method validation
@@ -79,7 +80,7 @@ public class ValidationManager {
 
         } catch (IllegalSjavaFileException e) {
             throw new IllegalSjavaFileException(
-                    String.format("Line %d: %s", currentLine, e.getMessage()), currentLine
+                    String.format("Line %d: %s", currentLine, e.getMessage())
             );
         }
     }
@@ -108,7 +109,7 @@ public class ValidationManager {
             }
         }
         else {
-            throw new IllegalSjavaFileException("Nested method declarations are not allowed", currentLine);
+            throw new IllegalSjavaFileException("Nested method declarations are not allowed");
         }
     }
 
@@ -168,7 +169,7 @@ public class ValidationManager {
 
             if (isFinal && !isInitialized) {
                 throw new IllegalSjavaFileException(
-                        "Final variable must be initialized: " + name, currentLine
+                        "Final variable must be initialized: " + name
                 );
             }
 
@@ -201,7 +202,7 @@ public class ValidationManager {
         for (String assignment : assignments) {
             Matcher matcher = VARIABLE_ASSIGNMENT_PATTERN.matcher(assignment);
             if (!matcher.matches()) {
-                throw new IllegalSjavaFileException("Invalid assignment format", currentLine);
+                throw new IllegalSjavaFileException("Invalid assignment format");
             }
 
             String varName = matcher.group(1);
@@ -235,12 +236,12 @@ public class ValidationManager {
      */
     private void processBlockStart(String line) throws IllegalSjavaFileException {
         if (!isInMethod()) {
-            throw new IllegalSjavaFileException("Block statement outside method", currentLine);
+            throw new IllegalSjavaFileException("Block statement outside method");
         }
 
         Matcher matcher = CONDITION_PATTERN.matcher(line);
         if (!matcher.find()) {
-            throw new IllegalSjavaFileException("Invalid block condition format", currentLine);
+            throw new IllegalSjavaFileException("Invalid block condition format");
         }
 
         String condition = matcher.group(1).trim();
@@ -256,7 +257,7 @@ public class ValidationManager {
     private void processBlockEnd() throws IllegalSjavaFileException {
         boolean isMethodEnd = scopeValidator.isMethodEnd();
         if (isMethodEnd && !lastLineWasReturn) {
-            throw new IllegalSjavaFileException("Missing return statement at method end", currentLine);
+            throw new IllegalSjavaFileException("Missing return statement at method end");
         }
         scopeValidator.exitScope(isMethodEnd);
     }
@@ -269,11 +270,11 @@ public class ValidationManager {
      */
     private void processReturnStatement(String line) throws IllegalSjavaFileException {
         if (!isInMethod()) {
-            throw new IllegalSjavaFileException("Return statement outside method", currentLine);
+            throw new IllegalSjavaFileException("Return statement outside method");
         }
 
         if (!methodParser.isValidReturnStatement(line)) {
-            throw new IllegalSjavaFileException("Invalid return statement format", currentLine);
+            throw new IllegalSjavaFileException("Invalid return statement format");
         }
     }
 
@@ -285,7 +286,7 @@ public class ValidationManager {
      */
     private void processMethodCall(String line) throws IllegalSjavaFileException {
         if (!isInMethod()) {
-            throw new IllegalSjavaFileException("Method call outside method body", currentLine);
+            throw new IllegalSjavaFileException("Method call outside method body");
         }
         methodParser.validateMethodCall(line);
     }

@@ -45,6 +45,6 @@ public enum Types {
                 return value;
             }
         }
-        throw new IllegalSjavaFileException("Unknown type: " + type, -1);
+        throw new IllegalSjavaFileException("Unknown type: " + type);
     }
 }

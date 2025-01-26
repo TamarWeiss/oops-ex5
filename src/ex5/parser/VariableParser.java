@@ -6,11 +6,9 @@ import java.util.regex.Pattern;
 
 /** Parser for handling variable declarations and assignments in s-Java */
 public class VariableParser extends BaseParser {
-    // Regex for variable name according to s-Java specs
-    private static final String VARIABLE_NAME = "(?:[a-zA-Z]\\w*|_[a-zA-Z0-9]\\w*)";
     // Updated declaration pattern to allow for multiple declarations on the same line
     private static final String DECLARATION_PATTERN = "^\\s*(final\\s+)?(" + Types.LEGAL_TYPES + ")\\s+"
-            + "(" + VARIABLE_NAME + "(?:\\s*=\\s*[^,;]+)?" + "(?:\\s*,\\s*" + VARIABLE_NAME +
+            + "(" + IDENTIFIER + "(?:\\s*=\\s*[^,;]+)?" + "(?:\\s*,\\s*" + IDENTIFIER +
             "(?:\\s*=\\s*[^,;]+)?)*)" + "\\s*;\\s*$";
 
     /**
@@ -21,19 +19,19 @@ public class VariableParser extends BaseParser {
      */
     public void validateDeclaration(String line) throws IllegalSjavaFileException {
         if (!Pattern.matches(DECLARATION_PATTERN, line)) {
-            throw new IllegalSjavaFileException("Invalid variable declaration format", -1);
+            throw new IllegalSjavaFileException("Invalid variable declaration format");
         }
 
         // Verify no double underscores at the start
         if (line.matches(".*\\b__\\w+.*")) {
-            throw new IllegalSjavaFileException("Variable names cannot start with double underscore", -1);
+            throw new IllegalSjavaFileException("Variable names cannot start with double underscore");
         }
 
         // Extract and validate each variable name
         String[] parts = line.split("[=,;]");
         for (String part : parts) {
             part = part.trim();
-            if (part.matches(VARIABLE_NAME)) {
+            if (part.matches(IDENTIFIER)) {
                 validateIdentifier(part);
             }
         }

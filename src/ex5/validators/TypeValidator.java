@@ -18,7 +18,7 @@ public class TypeValidator {
                           (target == Types.BOOLEAN && (value == Types.INT || value == Types.DOUBLE));
 
         if (!isValid) {
-            throw new IllegalSjavaFileException("Cannot convert " + value + " to " + target, -1);
+            throw new IllegalSjavaFileException("Cannot convert " + value + " to " + target);
         }
     }
 
@@ -44,22 +44,22 @@ public class TypeValidator {
                         try {
                             Double.parseDouble(value);
                         } catch (NumberFormatException e) {
-                            throw new IllegalSjavaFileException("Invalid boolean value: " + value, -1);
+                            throw new IllegalSjavaFileException("Invalid boolean value: " + value);
                         }
                     }
                     break;
                 case CHAR:
                     if (value.length() != 3 || value.charAt(0) != '\'' || value.charAt(2) != '\'') {
-                        throw new IllegalSjavaFileException("Invalid char literal: " + value, -1);
+                        throw new IllegalSjavaFileException("Invalid char literal: " + value);
                     }
                     break;
                 case STRING:
                     if (!value.startsWith("\"") || !value.endsWith("\"")) {
-                        throw new IllegalSjavaFileException("Invalid String literal: " + value, -1);
+                        throw new IllegalSjavaFileException("Invalid String literal: " + value);
                     }
             }
         } catch (NumberFormatException e) {
-            throw new IllegalSjavaFileException("Invalid " + type + " value: " + value, -1);
+            throw new IllegalSjavaFileException("Invalid " + type + " value: " + value);
         }
     }
 
@@ -71,7 +71,7 @@ public class TypeValidator {
      */
     public void validateConditionType(Types valueType) throws IllegalSjavaFileException {
         if (valueType != Types.BOOLEAN && valueType != Types.INT && valueType != Types.DOUBLE) {
-            throw new IllegalSjavaFileException("Invalid condition type: " + valueType, -1);
+            throw new IllegalSjavaFileException("Invalid condition type: " + valueType);
         }
     }
 }

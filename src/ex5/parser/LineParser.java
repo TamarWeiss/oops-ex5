@@ -17,9 +17,6 @@ public class LineParser extends BaseParser {
     private static final String BLOCK_END_PATTERN = "^\\s*}\\s*$";
     private static final String VARIABLE_ASSIGNMENT_PATTERN = "^\\s*" + IDENTIFIER + "\\s*=\\s*.+;\\s*$";
     private static final String METHOD_CALL_PATTERN = "^\\s*" + IDENTIFIER + "\\s*\\([^)]*\\)\\s*;\\s*$";
-    private static final String VALID_COMMENT_PATTERN = "^//.*$";  // No spaces before
-    // To explicitly catch invalid comments
-    private static final String COMMENT_WITH_SPACES_PATTERN = "^\\s+//.*$";
 
     /** Represents different types of lines in s-Java */
     public enum LineType {
@@ -74,19 +71,19 @@ public class LineParser extends BaseParser {
             case METHOD_DECLARATION:
             case BLOCK_START:
                 if (!line.trim().endsWith("{")) {
-                    throw new IllegalSjavaFileException("Invalid block start line ending", -1);
+                    throw new IllegalSjavaFileException("Invalid block start line ending");
                 }
                 break;
             case BLOCK_END:
                 if (!line.trim().equals("}")) {
-                    throw new IllegalSjavaFileException("Invalid block end line", -1);
+                    throw new IllegalSjavaFileException("Invalid block end line");
                 }
                 break;
             case VARIABLE_DECLARATION:
             case VARIABLE_ASSIGNMENT:
             case RETURN_STATEMENT:
                 if (!line.trim().endsWith(";")) {
-                    throw new IllegalSjavaFileException("Missing semicolon at line end", -1);
+                    throw new IllegalSjavaFileException("Missing semicolon at line end");
                 }
                 break;
             case COMMENT:
@@ -94,7 +91,7 @@ public class LineParser extends BaseParser {
             case EMPTY:
                 break; // No validation needed for these types
             default:
-                throw new IllegalSjavaFileException("Invalid line format", -1);
+                throw new IllegalSjavaFileException("Invalid line format");
         }
     }
 }
