@@ -167,25 +167,28 @@ public class ScopeValidator {
      * Validates variable access and returns its type
      *
      * @param name            the variable's name
-     * @param isBeingAssigned if the variable is currently being assigned
      * @return the variable's type
      * @throws IllegalSjavaFileException if said variable is not declared prior,
      *                                   or improper use of uninitialized variable
      */
-    public Types getVariableType(String name, boolean isBeingAssigned) throws IllegalSjavaFileException {
+    public Types getVariableType(String name) throws IllegalSjavaFileException {
+        Variable var = findVariable(name);
+        if (var == null) {
+            throw new IllegalSjavaFileException("Variable not declared: " + name);
+        }
+        return var.type;
+    }
+
+    public void validateVariableInitialization(String name) throws IllegalSjavaFileException {
         Variable var = findVariable(name);
 
         if (var == null) {
             throw new IllegalSjavaFileException("Variable not declared: " + name);
         }
 
-        // Only check initialization if we're using the variable (not assigning to it)
-        // AND it's a local variable
-        if (!isBeingAssigned && !isGlobalVariable(name) && !var.isInitialized) {
+        if (!var.isInitialized) {
             throw new IllegalSjavaFileException("Local variable " + name + " not initialized");
         }
-
-        return var.type;
     }
 
     /**
