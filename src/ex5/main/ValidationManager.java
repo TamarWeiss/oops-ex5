@@ -76,9 +76,7 @@ public class ValidationManager {
             lastLineWasReturn = lineType == LineType.RETURN_STATEMENT;
 
         } catch (IllegalSjavaFileException e) {
-            throw new IllegalSjavaFileException(
-                    String.format("Line %d: %s", lineNumber, e.getMessage())
-            );
+            throw new IllegalSjavaFileException(String.format("Line %d: %s", lineNumber, e.getMessage()));
         }
     }
 

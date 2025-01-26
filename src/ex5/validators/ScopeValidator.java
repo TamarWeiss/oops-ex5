@@ -131,9 +131,7 @@ public class ScopeValidator {
 
         // Check for variable redeclaration in the current scope
         if (currentScope.containsKey(name)) {
-            throw new IllegalSjavaFileException(
-                    "Variable already declared in current scope: " + name
-            );
+            throw new IllegalSjavaFileException("Variable already declared in current scope: " + name);
         }
 
         // For global variables, ensure no other global has the same name
@@ -167,31 +165,27 @@ public class ScopeValidator {
 
     /**
      * Validates variable access and returns its type
-     * Note: We should NOT check initialization when the variable is being assigned to
+     *
+     * @param name            the variable's name
+     * @param isBeingAssigned if the variable is currently being assigned
+     * @return the variable's type
+     * @throws IllegalSjavaFileException if said variable is not declared prior,
+     *                                   or improper use of uninitialized variable
      */
     public Types getVariableType(String name, boolean isBeingAssigned) throws IllegalSjavaFileException {
         Variable var = findVariable(name);
+
         if (var == null) {
-            throw new IllegalSjavaFileException(
-                    "Variable not declared: " + name);
+            throw new IllegalSjavaFileException("Variable not declared: " + name);
         }
 
         // Only check initialization if we're using the variable (not assigning to it)
         // AND it's a local variable
         if (!isBeingAssigned && !isGlobalVariable(name) && !var.isInitialized) {
-            throw new IllegalSjavaFileException(
-                    "Local variable " + name + " not initialized");
+            throw new IllegalSjavaFileException("Local variable " + name + " not initialized");
         }
 
         return var.type;
-    }
-
-    public void validateVariableInitialisation(String name) throws IllegalSjavaFileException {
-        Variable var = findVariable(name);
-        // For local variables, check initialization
-        if (!isGlobalVariable(name) && !var.isInitialized) {
-            throw new IllegalSjavaFileException("Local variable not initialized: " + name);
-        }
     }
 
     /**
