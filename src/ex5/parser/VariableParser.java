@@ -6,7 +6,6 @@ import java.util.regex.Pattern;
 
 /** Parser for handling variable declarations and assignments in s-Java */
 public class VariableParser extends BaseParser {
-    // Updated declaration pattern to allow for multiple declarations on the same line
     private static final String DECLARATION_PATTERN = "^\\s*(final\\s+)?(" + Types.LEGAL_TYPES + ")\\s+"
             + "(" + IDENTIFIER + "(?:\\s*=\\s*[^,;]+)?" + "(?:\\s*,\\s*" + IDENTIFIER +
             "(?:\\s*=\\s*[^,;]+)?)*)" + "\\s*;\\s*$";

@@ -5,7 +5,7 @@ public class IllegalSjavaFileException extends Exception {
     /**
      * IOSjavaException's constructor
      *
-     * @param message    an error message
+     * @param message an error message
      */
     public IllegalSjavaFileException(String message) {
         super(message);

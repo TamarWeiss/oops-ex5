@@ -12,10 +12,9 @@ public class TypeValidator {
      * @param value  Type of the value being assigned
      * @throws IllegalSjavaFileException if types are incompatible
      */
-    public void validateTypeCompatibility(Types target, Types value)
-    throws IllegalSjavaFileException {
+    public void validateTypeCompatibility(Types target, Types value) throws IllegalSjavaFileException {
         boolean isValid = target == value || (target == Types.DOUBLE && value == Types.INT) ||
-                          (target == Types.BOOLEAN && (value == Types.INT || value == Types.DOUBLE));
+                (target == Types.BOOLEAN && (value == Types.INT || value == Types.DOUBLE));
 
         if (!isValid) {
             throw new IllegalSjavaFileException("Cannot convert " + value + " to " + target);

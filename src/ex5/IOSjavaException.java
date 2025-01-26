@@ -1,7 +1,9 @@
 package ex5;
 
+import java.io.IOException;
+
 /** Exception for IO-related errors in s-Java processing */
-public class IOSjavaException extends Exception {
+public class IOSjavaException extends IOException {
     /**
      * IOSjavaException's constructor
      *
