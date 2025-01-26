@@ -1,7 +1,5 @@
 package ex5.parser;
 
-import ex5.IllegalSjavaFileException;
-
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -17,20 +15,6 @@ public class LineParser extends BaseParser {
     private static final String BLOCK_END_PATTERN = "^\\s*}\\s*$";
     private static final String VARIABLE_ASSIGNMENT_PATTERN = "^\\s*" + IDENTIFIER + "\\s*=\\s*.+;\\s*$";
     private static final String METHOD_CALL_PATTERN = "^\\s*" + IDENTIFIER + "\\s*\\([^)]*\\)\\s*;\\s*$";
-
-    /** Represents different types of lines in s-Java */
-    public enum LineType {
-        METHOD_DECLARATION,
-        VARIABLE_DECLARATION,
-        COMMENT,
-        VARIABLE_ASSIGNMENT,
-        METHOD_CALL,
-        EMPTY,
-        RETURN_STATEMENT,
-        BLOCK_START,
-        BLOCK_END,
-        INVALID
-    }
 
     private final Map<String, LineType> map = Map.of(
             EMPTY_LINE_PATTERN, LineType.EMPTY,

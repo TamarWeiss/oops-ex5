@@ -2,7 +2,6 @@ package ex5.main;
 
 import ex5.IllegalSjavaFileException;
 import ex5.parser.*;
-import ex5.parser.LineParser.LineType;
 import ex5.validators.ScopeValidator;
 import ex5.validators.SyntaxValidator;
 import ex5.validators.TypeValidator;

@@ -1,7 +1,7 @@
 package ex5.validators;
 
 import ex5.IllegalSjavaFileException;
-import ex5.parser.LineParser.LineType;
+import ex5.parser.LineType;
 import ex5.parser.Types;
 
 import java.util.regex.Pattern;
