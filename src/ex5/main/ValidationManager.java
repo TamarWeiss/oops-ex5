@@ -28,6 +28,9 @@ public class ValidationManager {
             "^\\s*(\\w+)\\s*=\\s*(.+)\\s*$"
     );
 
+    // Patterns for specific validations
+    private static final Pattern LOGICAL_OPERATOR = Pattern.compile("\\s*(\\|\\||&&)\\s*");
+
     public ValidationManager() {
         this.lineParser = new LineParser();
         this.methodParser = new MethodParser();
@@ -228,12 +231,12 @@ public class ValidationManager {
      */
     private void processBlockStart(String line) throws IllegalSjavaFileException {
         if (!isInMethod()) {
-            throw new IllegalSjavaFileException("Block statement outside method");
+            throw new IllegalSjavaFileException("Block statement outside method" + " at line:" +  line);
         }
 
         Matcher matcher = CONDITION_PATTERN.matcher(line);
         if (!matcher.find()) {
-            throw new IllegalSjavaFileException("Invalid block condition format");
+            throw new IllegalSjavaFileException("Invalid block condition format" + " at line:" +  line);
         }
 
         String condition = matcher.group(1).trim();
@@ -290,12 +293,53 @@ public class ValidationManager {
      * @throws IllegalSjavaFileException if the condition isn't formatted properly
      */
     private void validateCondition(String condition) throws IllegalSjavaFileException {
-        // Handle boolean literals
+
+        // Remove leading/trailing whitespace
+        condition = condition.trim();
+        // Handle single condition case (no operators)
+        if (!condition.contains("&&") && !condition.contains("||")) {
+            validateSingleCondition(condition);
+            return;
+        }
+
+        // Check for invalid operator placement at start/end
+        if (condition.startsWith("||") || condition.startsWith("&&") ||
+                condition.endsWith("||") || condition.endsWith("&&")) {
+            throw new IllegalSjavaFileException(
+                    "Logical operators cannot be at start or end of condition");
+        }
+
+        // Check for consecutive operators
+        if (condition.matches(".*?(\\|\\|\\s*\\|\\||&&\\s*&&|\\|\\|\\s*&&|&&\\s*\\|\\|).*?")) {
+            throw new IllegalSjavaFileException(
+                    "Cannot have consecutive operators");
+        }
+
+        // Split by || and && while preserving the operators
+        String[] tokens = condition.split("((?<=\\|\\|)|(?=\\|\\|)|(?<=&&)|(?=&&))");
+
+        for (int i = 0; i < tokens.length; i++) {
+            String token = tokens[i].trim();
+            if (token.equals("||") || token.equals("&&")) {
+                continue;  // Skip the operators themselves
+            }
+            if (token.isEmpty()) {
+                throw new IllegalSjavaFileException(
+                        "Empty condition between operators");
+            }
+            validateSingleCondition(token);
+        }
+    }
+
+    private void validateSingleCondition(String condition) throws IllegalSjavaFileException {
+        condition = condition.trim();
+
+        // Check for boolean literals
         if (condition.equals("true") || condition.equals("false")) {
             return;
         }
 
-        // Handle numeric literals
+        // Check for numeric literal
         try {
             Double.parseDouble(condition);
             return;
@@ -303,7 +347,7 @@ public class ValidationManager {
             // Not a number, continue to variable check
         }
 
-        // Must be a variable - validate it exists and has a compatible type
+        // Must be a variable - validate it exists and has compatible type
         Types type = scopeValidator.getVariableType(condition);
         typeValidator.validateConditionType(type);
     }
