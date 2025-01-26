@@ -58,40 +58,4 @@ public class LineParser extends BaseParser {
         }
         return LineType.INVALID;
     }
-
-    /**
-     * Validates that a line ends properly, according to s-Java rules
-     *
-     * @param line The line to validate
-     * @param type the line's type
-     * @throws IllegalSjavaFileException if the line ending is invalid
-     */
-    public void validateLineEnding(String line, LineType type) throws IllegalSjavaFileException {
-        switch (type) {
-            case METHOD_DECLARATION:
-            case BLOCK_START:
-                if (!line.trim().endsWith("{")) {
-                    throw new IllegalSjavaFileException("Invalid block start line ending");
-                }
-                break;
-            case BLOCK_END:
-                if (!line.trim().equals("}")) {
-                    throw new IllegalSjavaFileException("Invalid block end line");
-                }
-                break;
-            case VARIABLE_DECLARATION:
-            case VARIABLE_ASSIGNMENT:
-            case RETURN_STATEMENT:
-                if (!line.trim().endsWith(";")) {
-                    throw new IllegalSjavaFileException("Missing semicolon at line end");
-                }
-                break;
-            case COMMENT:
-                break; // No validation needed for comments
-            case EMPTY:
-                break; // No validation needed for these types
-            default:
-                throw new IllegalSjavaFileException("Invalid line format");
-        }
-    }
 }

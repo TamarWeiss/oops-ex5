@@ -1,6 +1,7 @@
 package ex5.validators;
 
 import ex5.IllegalSjavaFileException;
+import ex5.parser.LineParser.LineType;
 import ex5.parser.Types;
 
 import java.util.regex.Pattern;
@@ -55,29 +56,39 @@ public class SyntaxValidator {
     }
 
     /**
-     * Validates line ending based on a line type
+     * Validates that a line ends properly, according to s-Java rules
      *
-     * @param line       The line to validate
-     * @param isBlockEnd Whether this is a block ending line
-     * @throws IllegalSjavaFileException if line ending is invalid
+     * @param line The line to validate
+     * @param type the line's type
+     * @throws IllegalSjavaFileException if the line ending is invalid
      */
-    public void validateLineEnding(String line, boolean isBlockEnd) throws IllegalSjavaFileException {
+    public void validateLineEnding(String line, LineType type) throws IllegalSjavaFileException {
         line = line.trim();
 
-        if (isBlockEnd) {
-            if (!line.equals("}")) {
-                throw new IllegalSjavaFileException("Block end must be on its own line");
-            }
-            return;
-        }
-
-        if (!line.endsWith(";") && !line.endsWith("{") && !line.endsWith("}")) {
-            throw new IllegalSjavaFileException("Invalid line ending");
-        }
-
-        // Check for closing brace placement
-        if (line.endsWith("}") && !line.equals("}")) {
-            throw new IllegalSjavaFileException("Closing brace must be on its own line");
+        switch (type) {
+            case METHOD_DECLARATION:
+            case BLOCK_START:
+                if (!line.endsWith("{")) {
+                    throw new IllegalSjavaFileException("Invalid block start line ending");
+                }
+                break;
+            case BLOCK_END:
+                if (!line.equals("}")) {
+                    throw new IllegalSjavaFileException("Invalid block end line");
+                }
+                break;
+            case VARIABLE_DECLARATION:
+            case VARIABLE_ASSIGNMENT:
+            case RETURN_STATEMENT:
+                if (!line.trim().endsWith(";")) {
+                    throw new IllegalSjavaFileException("Missing semicolon at line end");
+                }
+                break;
+            case COMMENT:// No validation needed for comments
+            case EMPTY:
+                break; // No validation needed for these types
+            default:
+                throw new IllegalSjavaFileException("Invalid line format");
         }
     }
 
