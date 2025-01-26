@@ -173,7 +173,7 @@ public class ValidationManager {
                     // Try to validate as identifier first
                     variableParser.validateIdentifier(value);  // use existing value variable
                     // If it's a valid identifier, check type compatibility
-                    Types valueType = scopeValidator.getVariableType(value);
+                    Types valueType = scopeValidator.getVariableType(value, false);
                     typeValidator.validateTypeCompatibility(type, valueType);
                 } catch (IllegalSjavaFileException e) {
                     // Not a valid identifier, try as literal
@@ -206,13 +206,13 @@ public class ValidationManager {
                 value = value.substring(0, value.length() - 1).trim();
             }
 
-            Types varType = scopeValidator.getVariableType(varName);
+            Types varType = scopeValidator.getVariableType(varName, true);
 
             try {
                 // Try to validate as identifier first
                 variableParser.validateIdentifier(value);
                 // If it's a valid identifier, check type compatibility
-                Types valueType = scopeValidator.getVariableType(value);
+                Types valueType = scopeValidator.getVariableType(value, false);
                 typeValidator.validateTypeCompatibility(varType, valueType);
             } catch (IllegalSjavaFileException e) {
                 // Not a valid identifier, try as literal
@@ -348,7 +348,7 @@ public class ValidationManager {
         }
 
         // Must be a variable - validate it exists and has a compatible type
-        Types type = scopeValidator.getVariableType(condition);
+        Types type = scopeValidator.getVariableType(condition, false);
         typeValidator.validateConditionType(type);
     }
 
