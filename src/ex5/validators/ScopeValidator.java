@@ -177,11 +177,15 @@ public class ScopeValidator {
         if (var == null) {
             throw new IllegalSjavaFileException("Variable not declared: " + name);
         }
+        return var.type;
+    }
+
+    public void validateVariableInitialisation(String name) throws IllegalSjavaFileException {
+        Variable var = findVariable(name);
         // For local variables, check initialization
         if (!isGlobalVariable(name) && !var.isInitialized) {
             throw new IllegalSjavaFileException("Local variable not initialized: " + name);
         }
-        return var.type;
     }
 
     /**

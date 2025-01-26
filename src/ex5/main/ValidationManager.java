@@ -231,12 +231,12 @@ public class ValidationManager {
      */
     private void processBlockStart(String line) throws IllegalSjavaFileException {
         if (!isInMethod()) {
-            throw new IllegalSjavaFileException("Block statement outside method" + " at line:" +  line);
+            throw new IllegalSjavaFileException("Block statement outside method" + " at line:" + line);
         }
 
         Matcher matcher = CONDITION_PATTERN.matcher(line);
         if (!matcher.find()) {
-            throw new IllegalSjavaFileException("Invalid block condition format" + " at line:" +  line);
+            throw new IllegalSjavaFileException("Invalid block condition format" + " at line:" + line);
         }
 
         String condition = matcher.group(1).trim();
@@ -293,10 +293,10 @@ public class ValidationManager {
      * @throws IllegalSjavaFileException if the condition isn't formatted properly
      */
     private void validateCondition(String condition) throws IllegalSjavaFileException {
-
         // Remove leading/trailing whitespace
         condition = condition.trim();
-        // Handle single condition case (no operators)
+
+        // Handle a single condition case (no operators)
         if (!condition.contains("&&") && !condition.contains("||")) {
             validateSingleCondition(condition);
             return;
@@ -318,8 +318,8 @@ public class ValidationManager {
         // Split by || and && while preserving the operators
         String[] tokens = condition.split("((?<=\\|\\|)|(?=\\|\\|)|(?<=&&)|(?=&&))");
 
-        for (int i = 0; i < tokens.length; i++) {
-            String token = tokens[i].trim();
+        for (String s : tokens) {
+            String token = s.trim();
             if (token.equals("||") || token.equals("&&")) {
                 continue;  // Skip the operators themselves
             }
@@ -347,7 +347,7 @@ public class ValidationManager {
             // Not a number, continue to variable check
         }
 
-        // Must be a variable - validate it exists and has compatible type
+        // Must be a variable - validate it exists and has a compatible type
         Types type = scopeValidator.getVariableType(condition);
         typeValidator.validateConditionType(type);
     }
