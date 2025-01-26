@@ -20,7 +20,6 @@ public class ValidationManager {
     private final SyntaxValidator syntaxValidator;
     private final ScopeValidator scopeValidator;
     private final TypeValidator typeValidator;
-    private int currentLine;
     private boolean lastLineWasReturn;
 
     // Patterns for specific validations
@@ -36,7 +35,6 @@ public class ValidationManager {
         this.syntaxValidator = new SyntaxValidator();
         this.scopeValidator = new ScopeValidator();
         this.typeValidator = new TypeValidator();
-        this.currentLine = 0;
         this.lastLineWasReturn = false;
     }
 
@@ -48,11 +46,8 @@ public class ValidationManager {
      * @throws IllegalSjavaFileException if the line isn't formatted correctly
      */
     public void validateLine(String line, int lineNumber) throws IllegalSjavaFileException {
-        this.currentLine = lineNumber;
-        scopeValidator.setCurrentLine(lineNumber);
-
-        // Skip empty lines and comments early
         LineType lineType = lineParser.getLineType(line);
+        // Skip empty lines and comments early
         if (lineType == LineType.EMPTY || lineType == LineType.COMMENT) {
             return;
         }
@@ -79,7 +74,7 @@ public class ValidationManager {
 
         } catch (IllegalSjavaFileException e) {
             throw new IllegalSjavaFileException(
-                    String.format("Line %d: %s", currentLine, e.getMessage())
+                    String.format("Line %d: %s", lineNumber, e.getMessage())
             );
         }
     }
@@ -167,9 +162,7 @@ public class ValidationManager {
             }
 
             if (isFinal && !isInitialized) {
-                throw new IllegalSjavaFileException(
-                        "Final variable must be initialized: " + name
-                );
+                throw new IllegalSjavaFileException("Final variable must be initialized: " + name);
             }
 
             if (isInitialized) {
@@ -326,7 +319,6 @@ public class ValidationManager {
 
     /** Reset all validators' state */
     public void reset() {
-        currentLine = 0;
         lastLineWasReturn = false;
         scopeValidator.reset();
     }

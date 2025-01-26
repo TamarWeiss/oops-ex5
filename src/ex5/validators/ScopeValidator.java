@@ -15,13 +15,11 @@ public class ScopeValidator {
         final Types type;
         final boolean isFinal;
         boolean isInitialized;
-        final int declarationLine;
 
-        Variable(Types type, boolean isFinal, boolean isInitialized, int declarationLine) {
+        Variable(Types type, boolean isFinal, boolean isInitialized) {
             this.type = type;
             this.isFinal = isFinal;
             this.isInitialized = isInitialized;
-            this.declarationLine = declarationLine;
         }
     }
 
@@ -41,7 +39,6 @@ public class ScopeValidator {
     private final Map<String, Variable> globalScope;
     private final Deque<Scope> scopeStack;
     private boolean inMethod;
-    private int currentLine;
 
     private int nestingLevel = 0;
     private static final int MAX_NESTING_LEVEL = Integer.MAX_VALUE;
@@ -50,16 +47,6 @@ public class ScopeValidator {
         this.globalScope = new HashMap<>();
         this.scopeStack = new ArrayDeque<>();
         this.inMethod = false;
-        this.currentLine = 0;
-    }
-
-    /**
-     * Sets the current line number for better error reporting
-     *
-     * @param lineNumber the current line number
-     */
-    public void setCurrentLine(int lineNumber) {
-        this.currentLine = lineNumber;
     }
 
     /**
@@ -110,9 +97,7 @@ public class ScopeValidator {
      */
     public void declareParameter(String name, Types type, boolean isFinal) throws IllegalSjavaFileException {
         if (scopeStack.isEmpty() || !scopeStack.peek().isMethodScope) {
-            throw new IllegalSjavaFileException(
-                    "Method parameter declaration outside method scope"
-            );
+            throw new IllegalSjavaFileException("Method parameter declaration outside method scope");
         }
 
         Scope methodScope = scopeStack.peek();
@@ -121,7 +106,7 @@ public class ScopeValidator {
         }
 
         methodScope.methodParameters.add(name);
-        methodScope.variables.put(name, new Variable(type, isFinal, true, currentLine));
+        methodScope.variables.put(name, new Variable(type, isFinal, true));
     }
 
     /**
@@ -160,7 +145,7 @@ public class ScopeValidator {
         }
 
         // Add the variable to the current scope
-        currentScope.put(name, new Variable(type, isFinal, isInitialized, currentLine));
+        currentScope.put(name, new Variable(type, isFinal, isInitialized));
     }
 
     /**
@@ -250,7 +235,6 @@ public class ScopeValidator {
         globalScope.clear();
         scopeStack.clear();
         inMethod = false;
-        currentLine = 0;
         nestingLevel = 0;
     }
 }
