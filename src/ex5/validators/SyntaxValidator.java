@@ -26,6 +26,11 @@ public class SyntaxValidator {
             throw new IllegalSjavaFileException("Multi-line comments are not allowed");
         }
 
+        // Now check for inline comments in non-comment lines
+        if (line.contains("//")) {
+            throw new IllegalSjavaFileException("Inline comments are not allowed in s-Java");
+        }
+
         // Check for invalid comment placement
         if (Pattern.matches(INVALID_COMMENT, line)) {
             throw new IllegalSjavaFileException("Invalid comment format");
@@ -77,6 +82,7 @@ public class SyntaxValidator {
                     throw new IllegalSjavaFileException("Invalid block end line");
                 }
                 break;
+            case METHOD_CALL:
             case VARIABLE_DECLARATION:
             case VARIABLE_ASSIGNMENT:
             case RETURN_STATEMENT:
