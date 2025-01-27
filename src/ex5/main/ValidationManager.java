@@ -296,44 +296,25 @@ public class ValidationManager {
         // Remove leading/trailing whitespace
         condition = condition.trim();
 
-        // Handle a single condition case (no operators)
-        if (!condition.contains("&&") && !condition.contains("||")) {
-            validateSingleCondition(condition);
-            return;
-        }
-
         // Check for invalid operator placement at start/end
         if (condition.startsWith("||") || condition.startsWith("&&") ||
                 condition.endsWith("||") || condition.endsWith("&&")) {
-            throw new IllegalSjavaFileException(
-                    "Logical operators cannot be at start or end of condition");
+            throw new IllegalSjavaFileException("Logical operators cannot be at start or end of condition");
         }
 
-        // Check for consecutive operators
-        if (condition.matches(".*?(\\|\\|\\s*\\|\\||&&\\s*&&|\\|\\|\\s*&&|&&\\s*\\|\\|).*?")) {
-            throw new IllegalSjavaFileException(
-                    "Cannot have consecutive operators");
-        }
-
-        // Split by || and && while preserving the operators
-        String[] tokens = condition.split("((?<=\\|\\|)|(?=\\|\\|)|(?<=&&)|(?=&&))");
+        // Split by || and &&, discarding the operators
+        String[] tokens = condition.split("\\|\\||&&");
 
         for (String s : tokens) {
             String token = s.trim();
-            if (token.equals("||") || token.equals("&&")) {
-                continue;  // Skip the operators themselves
-            }
             if (token.isEmpty()) {
-                throw new IllegalSjavaFileException(
-                        "Empty condition between operators");
+                throw new IllegalSjavaFileException("Cannot have consecutive operators");
             }
             validateSingleCondition(token);
         }
     }
 
     private void validateSingleCondition(String condition) throws IllegalSjavaFileException {
-        condition = condition.trim();
-
         // Check for boolean literals
         if (condition.equals("true") || condition.equals("false")) {
             return;
@@ -342,15 +323,12 @@ public class ValidationManager {
         // Check for numeric literal
         try {
             Double.parseDouble(condition);
-            return;
         } catch (NumberFormatException ignored) {
-            // Not a number, continue to variable check
+            // Must be a variable - validate it exists and has a compatible type
+            Types type = scopeValidator.getVariableType(condition);
+            typeValidator.validateConditionType(type);
+            scopeValidator.validateVariableInitialization(condition);
         }
-
-        // Must be a variable - validate it exists and has a compatible type
-        Types type = scopeValidator.getVariableType(condition);
-        scopeValidator.validateVariableInitialization(condition);
-        typeValidator.validateConditionType(type);
     }
 
     /**
