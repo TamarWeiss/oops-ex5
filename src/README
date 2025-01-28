@@ -1,62 +1,40 @@
-# oops-ex5
-Project Overview & Structure
+tamar.weiss,shrafers
+323816520,314682022
 
-Main Packages and Classes:
-Our project will live in the ex5 package, with several key components:
+# Main Regular Expressions
 
-1. Main Package (ex5.main):
-- Sjavac: Our entry point class with the main method. It's like the conductor of an orchestra, coordinating all other components.
-- FileProcessor: Handles reading the .sjava file and initial line processing. Think of it as our first line of defense, making sure we can actually read and process the file.
-- Custom exceptions for different types of errors we might encounter
+Our s-Java verifier uses several regular expressions for syntax validation.
+ Here are two of the most important ones:
 
-2. Parser Package (ex5.parser):
-- BaseParser: The foundation for all our parsing needs
-- LineParser: Determines what type of line we're dealing with (method declaration, variable declaration, etc.)
-- VariableParser: Specifically handles variable-related lines
-- MethodParser: Takes care of method declarations and their bodies
+1. Variable Declaration Pattern
+The regex ^\\s*(final\\s+)?(Types.LEGAL_TYPES)\\s+(IDENTIFIER(?:\\s*=\\s*[^,;]+)?(?:\\s*,
+\\s*IDENTIFIER(?:\\s*=\\s*[^,;]+)?)*)\\s*;\\s*$
+is used to validate variable declarations in s-Java.
+This pattern starts by allowing optional whitespace and a 'final' modifier,
+followed by any legal s-Java type. After required whitespace,
+it matches a variable name that can be optionally initialized.
+The pattern then allows for multiple variables to be declared in
+the same line through a comma-separated list. Each additional variable
+can also be optionally initialized. The line must end with a semicolon.
+This flexible pattern can validate simple declarations like "int x;"
+as well as complex ones like "final String name = "hello", title = "Mr";",
+making it a crucial part of our syntax validation system.
 
-3. Validators Package (ex5.validators):
-- ScopeValidator: Manages variable and method scope rules
-- TypeValidator: Ensures type compatibility
-- SyntaxValidator: Checks basic syntax rules
+2. Method Declaration Pattern
+The regex ^\\s*void\\s+IDENTIFIER\\s*\\([^)]*\\)\\s*\\{\\s*$
+handles method declarations in s-Java.
+It begins by matching optional whitespace followed by the mandatory 'void'
+keyword (since s-Java only supports void methods). After that,
+it requires a valid method name followed by parentheses that can contain any
+characters except a closing parenthesis (for parameters).
+The pattern ends by matching an opening curly brace,
+ensuring proper method syntax. This pattern effectively
+validates method declarations ranging from simple ones like
+"void main() {" to more complex ones with parameters
+like "void processData(final String input) {",
+while enforcing s-Java's strict method declaration rules.
 
-
-How It Works
-1. The file comes in through FileProcessor
-2. Each line goes through LineParser to identify what we're dealing with
-3. Specialized parsers handle their specific line types
-4. Validators check if everything follows the rules
-5. We track everything in scopes (like keeping track of variables in different rooms of a house)
-
-The OOP
-We're using several key Object-Oriented principles:
-
-1. Encapsulation: Each class has a specific job and protects its internal workings. For example, the ScopeValidator doesn't need to know how the LineParser works internally.
-
-2. Composition: Instead of making everything inherit from each other, we'll have classes contain instances of other classes. For instance, our MethodParser will use a VariableParser rather than trying to handle variables itself.
-
-3. Single Responsibility: Each class has one main job. This makes our code easier to understand and modify.
-
-Implementation Order
-Here's how I suggest we tackle this project:
-
-1. Foundation Phase:
-- Set up the basic project structure
-- Create the main class that reads files
-- Implement basic regex patterns for line identification
-- Create our exception hierarchy
-
-2. Core Parsing Phase:
-- Build the line parser to identify different types of lines
-- Implement variable parsing (start with simple cases)
-- Create the scope management system
-
-3. Advanced Features Phase:
-- Implement method parsing
-- Add block parsing (if/while)
-- Build type checking system
-
-4. Integration Phase:
-- Connect all components
-- Add comprehensive error handling
-- Implement final validation logic
+These patterns form the foundation of our syntax validation system,
+ensuring that variable declarations and method definitions adhere to s-Java's
+specifications while being flexible enough to handle all valid variations of these
+constructs.
