@@ -3,7 +3,10 @@ package ex5.validators;
 import ex5.IllegalSjavaFileException;
 import ex5.parser.Types;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Manages scope and variable tracking for s-Java verification.
