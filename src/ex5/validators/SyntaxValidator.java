@@ -13,7 +13,8 @@ public class SyntaxValidator {
     private static final String INVALID_COMMENT = "/\\*|\\*/|^\\s+//";
     private static final String REQUIRED_WHITESPACE = "(?:void|final|" + Types.LEGAL_TYPES + ")(?!\\s+)\\w+";
     private static final String MISSING_REQUIRED_SPACE = "(void|final|" + Types.LEGAL_TYPES + ")(\\w+)";
-
+   private static final String INVALID_METHOD_DECLARATION= "\\s*(int|double|String|boolean|char)" +
+           "\\s+\\w+\\s*\\(.*";
     /**
      * Validates general line syntax
      *
@@ -40,6 +41,11 @@ public class SyntaxValidator {
         if (Pattern.matches(REQUIRED_WHITESPACE, line)) {
             throw new IllegalSjavaFileException("Missing required whitespace after keyword");
         }
+
+        if (line.matches(INVALID_METHOD_DECLARATION)) {
+            throw new IllegalSjavaFileException("Invalid declaration: appears to be a method declaration with non-void return type. Only void methods are supported in s-Java");
+        }
+
     }
 
     public void validateRequiredSpaces(String line) throws IllegalSjavaFileException {
