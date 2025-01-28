@@ -217,6 +217,12 @@ public class ScopeValidator {
         return findVariable(name).getType();
     }
 
+    /**
+     * Validates that a variable is initialized
+     *
+     * @param name the variable's name
+     * @throws IllegalSjavaFileException if the variable is not initialized
+     */
     public void validateVariableInitialization(String name) throws IllegalSjavaFileException {
         if (!findVariable(name).isInitialized()) {
             throw new IllegalSjavaFileException(String.format(ERR_VAR_NOT_INIT, name));

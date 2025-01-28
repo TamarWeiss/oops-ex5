@@ -93,6 +93,12 @@ public class SyntaxValidator {
         }
     }
 
+    /**
+     * Validates required spaces in line
+     *
+     * @param line The line to validate
+     * @throws IllegalSjavaFileException if required spaces are missing
+     */
     public void validateRequiredSpaces(String line) throws IllegalSjavaFileException {
         if (MISSING_REQUIRED_SPACE.matcher(line).matches()) {
             throw new IllegalSjavaFileException(ERR_MISSING_TYPE_SPACE);
