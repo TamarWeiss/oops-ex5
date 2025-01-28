@@ -16,13 +16,15 @@ public class SyntaxValidator {
     private static final String MULTI_LINE_START = "/\\*";
     private static final String MULTI_LINE_END = "\\*/";
     private static final String LEADING_SPACE_COMMENT = "^\\s+//";
-    private static final String PATTERN_INVALID_COMMENT = MULTI_LINE_START + "|" + MULTI_LINE_END + "|" + LEADING_SPACE_COMMENT;
+    private static final String PATTERN_INVALID_COMMENT = MULTI_LINE_START + "|" + MULTI_LINE_END +
+            "|" + LEADING_SPACE_COMMENT;
 
     // Whitespace validation patterns
     private static final String PATTERN_KEYWORD_GROUP = "(?:void|final|" + Types.LEGAL_TYPES + ")";
     private static final String PATTERN_NO_SPACE = "(?!\\s+)";
     private static final String PATTERN_WORD = "\\w+";
-    private static final String PATTERN_REQUIRED_WHITESPACE = PATTERN_KEYWORD_GROUP + PATTERN_NO_SPACE + PATTERN_WORD;
+    private static final String PATTERN_REQUIRED_WHITESPACE = PATTERN_KEYWORD_GROUP + PATTERN_NO_SPACE +
+            PATTERN_WORD;
 
     // Missing space pattern components
     private static final String PATTERN_TYPE_GROUP = "(void|final|" + Types.LEGAL_TYPES + ")";
@@ -32,7 +34,8 @@ public class SyntaxValidator {
     // Method declaration pattern components
     private static final String PATTERN_TYPE = "(" + Types.LEGAL_TYPES + ")";
     private static final String PATTERN_METHOD_PARAMS = "\\s*\\(.*";
-    private static final String PATTERN_INVALID_METHOD = "\\s*" + PATTERN_TYPE + "\\s+" + PATTERN_WORD + PATTERN_METHOD_PARAMS;
+    private static final String PATTERN_INVALID_METHOD = "\\s*" + PATTERN_TYPE + "\\s+" + PATTERN_WORD +
+            PATTERN_METHOD_PARAMS;
 
     // Operators pattern
     private static final String PATTERN_OPERATORS = ".*[+\\-*/%].*";
@@ -47,7 +50,8 @@ public class SyntaxValidator {
     private static final String ERR_INLINE_COMMENT = "Inline comments are not allowed in s-Java";
     private static final String ERR_INVALID_COMMENT = "Invalid comment format";
     private static final String ERR_MISSING_WHITESPACE = "Missing required whitespace after keyword";
-    private static final String ERR_INVALID_METHOD = "Invalid declaration: appears to be a method declaration with non-void return type. " +
+    private static final String ERR_INVALID_METHOD = "Invalid declaration: appears to be a method  " +
+            "declaration with non-void return type. " +
             "Only void methods are supported in s-Java";
     private static final String ERR_MISSING_TYPE_SPACE = "Missing required space between type and identifier";
     private static final String ERR_INVALID_COMMENT_SYNTAX = "Invalid comment syntax";
@@ -58,7 +62,8 @@ public class SyntaxValidator {
     private static final Pattern VALID_COMMENT = Pattern.compile(PATTERN_VALID_COMMENT);
     private static final Pattern INVALID_COMMENT = Pattern.compile(PATTERN_INVALID_COMMENT);
     private static final Pattern REQUIRED_WHITESPACE = Pattern.compile(PATTERN_REQUIRED_WHITESPACE);
-    private static final Pattern MISSING_REQUIRED_SPACE = Pattern.compile(".*" + PATTERN_MISSING_REQUIRED_SPACE + ".*");
+    private static final Pattern MISSING_REQUIRED_SPACE = Pattern.compile(".*" +
+            PATTERN_MISSING_REQUIRED_SPACE + ".*");
     private static final Pattern INVALID_METHOD_DECLARATION = Pattern.compile(PATTERN_INVALID_METHOD);
 
     /**

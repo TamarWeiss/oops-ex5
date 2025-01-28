@@ -34,7 +34,8 @@ public class ValidationManager {
     private static final String ERR_BLOCK_OUTSIDE_METHOD = "Block statement outside method at line:";
     private static final String ERR_INVALID_CONDITION = "Invalid block condition format at line:";
     private static final String ERR_MISSING_RETURN = "Missing return statement at method end";
-    private static final String ERR_INVALID_OPERATORS = "Logical operators cannot be at start or end of condition";
+    private static final String ERR_INVALID_OPERATORS =
+            "Logical operators cannot be at start or end of condition";
     private static final String ERR_CONSECUTIVE_OPERATORS = "Cannot have consecutive operators";
     private static final String ERR_LINE_NUMBER_FORMAT = "Line %d: %s";
 
@@ -96,7 +97,8 @@ public class ValidationManager {
             lastLineWasReturn = lineType == LineType.RETURN_STATEMENT;
 
         } catch (IllegalSjavaFileException e) {
-            throw new IllegalSjavaFileException(String.format(ERR_LINE_NUMBER_FORMAT, lineNumber, e.getMessage()));
+            throw new IllegalSjavaFileException(String.format(ERR_LINE_NUMBER_FORMAT,
+                    lineNumber, e.getMessage()));
         }
     }
 
@@ -134,7 +136,8 @@ public class ValidationManager {
         boolean isFinal = line.startsWith(FINAL_KEYWORD);
         Types type = Types.getType(line.split(WHITESPACE_REGEX)[isFinal ? 1 : 0]);
         int start = type.toString().length() + (isFinal ? FINAL_KEYWORD.length() + 1 : 0);
-        String[] declarations = line.substring(start, line.length() - 1).trim().split(COMMA_WITH_SPACES_REGEX);
+        String[] declarations = line.substring(start,
+                line.length() - 1).trim().split(COMMA_WITH_SPACES_REGEX);
 
         // Process each declaration
         for (String declaration : declarations) {
