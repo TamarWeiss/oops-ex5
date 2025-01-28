@@ -81,6 +81,23 @@ public class ValidationManager {
     }
 
     /**
+     * Get current method status
+     *
+     * @return the current method status
+     */
+    public boolean isInMethod() {
+        return scopeValidator.isInMethod();
+    }
+
+    /** Reset all validators' state */
+    public void reset() {
+        lastLineWasReturn = false;
+        scopeValidator.reset();
+    }
+
+    //---------------------------- private method ----------------------------------------
+
+    /**
      * Processes method declarations
      *
      * @param line A single line of code
@@ -94,7 +111,7 @@ public class ValidationManager {
             // Process method parameters
             String[] params = methodParser.extractParameters(line);
             for (String param : params) {
-                String[] paramParts = param.trim().split("\\s+");
+                String[] paramParts = param.split("\\s+");
                 boolean isFinal = paramParts[0].equals("final");
                 int typeIndex = isFinal ? 1 : 0;
 
@@ -283,7 +300,12 @@ public class ValidationManager {
         if (!isInMethod()) {
             throw new IllegalSjavaFileException("Method call outside method body");
         }
-        methodParser.validateMethodCall(line);
+        String[] params = methodParser.validateMethodCall(line);
+
+        for (String param : params) {
+            scopeValidator.getVariableType(param);
+            scopeValidator.validateVariableInitialization(param);
+        }
     }
 
     /**
@@ -329,20 +351,5 @@ public class ValidationManager {
             typeValidator.validateConditionType(type);
             scopeValidator.validateVariableInitialization(condition);
         }
-    }
-
-    /**
-     * Get current method status
-     *
-     * @return the current method status
-     */
-    public boolean isInMethod() {
-        return scopeValidator.isInMethod();
-    }
-
-    /** Reset all validators' state */
-    public void reset() {
-        lastLineWasReturn = false;
-        scopeValidator.reset();
     }
 }

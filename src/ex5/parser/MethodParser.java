@@ -28,7 +28,6 @@ public class MethodParser extends BaseParser {
         if (!matcher.matches()) {
             throw new IllegalSjavaFileException("Invalid method declaration format");
         }
-
         String methodName = matcher.group(1);
 
         // Check for method overloading (not allowed in s-Java)
@@ -43,10 +42,7 @@ public class MethodParser extends BaseParser {
         }
 
         // Validate parameters if present
-        String params = matcher.group(2);
-        if (params != null && !params.trim().isEmpty()) {
-            validateParameters(params.trim());
-        }
+        validateParameters(extractParameters(line));
     }
 
     /**
@@ -55,11 +51,9 @@ public class MethodParser extends BaseParser {
      * @param params The parameters to validate
      * @throws IllegalSjavaFileException if the parameters are invalid
      */
-    private void validateParameters(String params) throws IllegalSjavaFileException {
-        String[] paramList = params.split("\\s*,\\s*");
-
-        for (String param : paramList) {
-            String[] parts = param.trim().split("\\s+");
+    private void validateParameters(String[] params) throws IllegalSjavaFileException {
+        for (String param : params) {
+            String[] parts = param.split("\\s+");
 
             // Check for 2 or 3 parts (final modifier is optional)
             if (parts.length < 2 || parts.length > 3) {
@@ -109,14 +103,17 @@ public class MethodParser extends BaseParser {
      *
      * @param line a single line of code
      * @throws IllegalSjavaFileException if the method call isn't formatted correctly
+     * @return the method's parameters
      */
-    public void validateMethodCall(String line) throws IllegalSjavaFileException {
+    public String[] validateMethodCall(String line) throws IllegalSjavaFileException {
         // Remove trailing semicolon and whitespace
-        line = line.substring(0, line.length() - 1).trim();
+        line = line.trim();
 
-        // Basic format check
-        if (!line.matches(IDENTIFIER + "\\s*\\([^)]*\\)")) {
-            throw new IllegalSjavaFileException("Invalid method call format");
+        String methodName = line.substring(0, line.indexOf('('));
+        if (!methodNames.contains(methodName)) {
+            throw new IllegalSjavaFileException("Method not found: " + methodName);
         }
+
+        return extractParameters(line);
     }
 }
