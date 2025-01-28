@@ -27,28 +27,17 @@ public class MethodParser extends BaseParser {
     }
 
     /**
-     * Converts an array of parameter strings into a list of Variable instances
-     *
-     * @param params an array of parameters
-     * @return a list of their Variable equivalents
-     * @throws IllegalSjavaFileException if any of the parameters given isn't formatted correctly
-     */
-    public List<Variable> parseParameters(String[] params) throws IllegalSjavaFileException {
-        List<Variable> parameters = new ArrayList<>();
-        for (String param : params) {
-            parameters.add(parseParameter(param));
-        }
-        return parameters;
-    }
-
-    /**
      * Validates a method declaration line according to s-Java rules
      *
      * @param line The declaration line to validate
      * @throws IllegalSjavaFileException if the declaration is invalid
      */
     public void validateMethodDeclaration(String line) throws IllegalSjavaFileException {
-        String methodName = line.substring(0, line.indexOf('(')).split("\\s+")[1];
+        if (scopeValidator.isInMethod()) {
+            throw new IllegalSjavaFileException("Nested method declarations are not allowed");
+        }
+
+        String methodName = getMethodName(line, LineType.METHOD_DECLARATION);
 
         // Check for method overloading (not allowed in s-Java)
         if (getMethod(methodName) != null) {
@@ -59,32 +48,32 @@ public class MethodParser extends BaseParser {
         if (!methodName.matches("^[a-zA-Z]\\w*$")) {
             throw new IllegalSjavaFileException("Invalid method name: " + methodName);
         }
+
         String[] params = extractParameters(line);
         validateParameters(params); // Validate parameters if present
-        methods.add(new Method(methodName, parseParameters(params)));
+        scopeValidator.enterScope(true);
+
+        Method method = new Method(methodName, new ArrayList<>());
+        for (String param : params) {
+            method.parameters.add(parseParameter(param));
+        }
+        methods.add(method);
     }
 
     /**
-     * Checks if a line is a valid return statement
+     * Processes return statements
      *
-     * @param line The line to check
-     * @return true if it's a valid return statement
+     * @param line a single line of code
+     * @throws IllegalSjavaFileException if the return statement is outside a method, or improperly formatted
      */
-    public boolean isValidReturnStatement(String line) {
-        return line.trim().matches("^\\s*return\\s*;\\s*$");
-    }
+    public void processReturnStatement(String line) throws IllegalSjavaFileException {
+        if (!scopeValidator.isInMethod()) {
+            throw new IllegalSjavaFileException("Return statement outside method");
+        }
 
-    /**
-     * extracts the parameters from a declaration
-     *
-     * @param declaration a declaration string
-     * @return an array of parameters
-     */
-    public String[] extractParameters(String declaration) {
-        int start = declaration.indexOf('(');
-        int end = declaration.lastIndexOf(')');
-        String params = declaration.substring(start + 1, end).trim();
-        return params.isEmpty() ? new String[0] : params.split("\\s*,\\s*");
+        if (!line.trim().matches("^return\\s*;$")) {
+            throw new IllegalSjavaFileException("Invalid return statement format");
+        }
     }
 
     /**
@@ -94,17 +83,21 @@ public class MethodParser extends BaseParser {
      * @throws IllegalSjavaFileException if the method call isn't formatted correctly
      */
     public void validateMethodCall(String line) throws IllegalSjavaFileException {
+        if (!scopeValidator.isInMethod()) {
+            throw new IllegalSjavaFileException("Method call outside method body");
+        }
+
         // Remove trailing semicolon and whitespace
         line = line.trim();
 
-        String methodName = line.substring(0, line.indexOf('('));
+        String methodName = getMethodName(line, LineType.METHOD_CALL);
         Method method = getMethod(methodName);
         if (method == null) {
             throw new IllegalSjavaFileException("Method not found: " + methodName);
         }
 
         String[] params = extractParameters(line);
-        int expectedLength = method.parameters().size();
+        int expectedLength = method.parameters.size();
         if (params.length != expectedLength) {
             throw new IllegalSjavaFileException(
                     "Incompatible number of parameters: expected " + expectedLength + ", got " + params.length
@@ -112,7 +105,7 @@ public class MethodParser extends BaseParser {
         }
 
         for (int i = 0; i < params.length; i++) {
-            Types expectedType = method.parameters().get(i).getType();
+            Types expectedType = method.parameters.get(i).getType();
             Types receivedType = scopeValidator.getVariableType(params[i]);
             if (!expectedType.equals(receivedType)) {
                 throw new IllegalSjavaFileException(
@@ -133,7 +126,7 @@ public class MethodParser extends BaseParser {
      */
     private Method getMethod(String methodName) {
         for (Method method : methods) {
-            if (methodName.equals(method.name())) {
+            if (methodName.equals(method.name)) {
                 return method;
             }
         }
@@ -141,7 +134,32 @@ public class MethodParser extends BaseParser {
     }
 
     /**
-     * Converts a parameter string into a variable instance
+     * Extracts the method's name according to the line type.
+     *
+     * @param line     a single line of code.
+     * @param lineType its type, either a method declaration or a method call
+     * @return the method's name
+     */
+    private String getMethodName(String line, LineType lineType) {
+        String start = line.substring(0, line.indexOf('(')).trim();
+        return lineType == LineType.METHOD_DECLARATION ? start.split("\\s+")[1] : start;
+    }
+
+    /**
+     * extracts the parameters from a method declaration / call
+     *
+     * @param line a method declaration / call string
+     * @return an array of parameters
+     */
+    private String[] extractParameters(String line) {
+        String params = line.substring(
+                line.indexOf('(') + 1, line.lastIndexOf(')')
+        ).trim();
+        return params.isEmpty() ? new String[0] : params.split("\\s*,\\s*");
+    }
+
+    /**
+     * Converts and declares a parameter string into a variable instance
      *
      * @param param the parameter as a string
      * @return it's variable equivalent
@@ -154,6 +172,7 @@ public class MethodParser extends BaseParser {
 
         Types type = Types.getType(paramParts[typeIndex]);
         String name = paramParts[typeIndex + 1];
+        scopeValidator.declareParameter(name, type, isFinal);
         return new Variable(name, type, isFinal, true);
     }
 

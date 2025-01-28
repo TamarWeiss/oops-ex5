@@ -3,7 +3,6 @@ package ex5.main;
 import ex5.IllegalSjavaFileException;
 import ex5.parser.*;
 import ex5.validators.ScopeValidator;
-import ex5.validators.ScopeValidator.Variable;
 import ex5.validators.SyntaxValidator;
 import ex5.validators.TypeValidator;
 
@@ -66,13 +65,13 @@ public class ValidationManager {
 
             // Process based on a line type
             switch (lineType) {
-                case METHOD_DECLARATION -> processMethodDeclaration(line);
+                case METHOD_DECLARATION ->  methodParser.validateMethodDeclaration(line);
                 case VARIABLE_DECLARATION -> processVariableDeclaration(line);
                 case VARIABLE_ASSIGNMENT -> processVariableAssignment(line);
                 case BLOCK_START -> processBlockStart(line);
                 case BLOCK_END -> processBlockEnd();
-                case RETURN_STATEMENT -> processReturnStatement(line);
-                case METHOD_CALL -> processMethodCall(line);
+                case RETURN_STATEMENT -> methodParser.processReturnStatement(line);
+                case METHOD_CALL -> methodParser.validateMethodCall(line);
                 case INVALID -> throw new IllegalSjavaFileException("Invalid line format");
             }
 
@@ -103,28 +102,6 @@ public class ValidationManager {
     }
 
     //---------------------------- private method ----------------------------------------
-
-    /**
-     * Processes method declarations
-     *
-     * @param line A single line of code
-     * @throws IllegalSjavaFileException if a nested method declaration occurred
-     */
-    private void processMethodDeclaration(String line) throws IllegalSjavaFileException {
-        if (!isInMethod()) {
-            methodParser.validateMethodDeclaration(line);
-            scopeValidator.enterScope(true);
-
-            // Process method parameters
-            String[] params = methodParser.extractParameters(line);
-            for (Variable variable: methodParser.parseParameters(params)) {
-                scopeValidator.declareParameter(variable.getName(), variable.getType(), variable.isFinal());
-            }
-        }
-        else {
-            throw new IllegalSjavaFileException("Nested method declarations are not allowed");
-        }
-    }
 
     /**
      * Processes variable declarations
@@ -273,35 +250,6 @@ public class ValidationManager {
             throw new IllegalSjavaFileException("Missing return statement at method end");
         }
         scopeValidator.exitScope(isMethodEnd);
-    }
-
-    /**
-     * Processes return statements
-     *
-     * @param line a single line of code
-     * @throws IllegalSjavaFileException if the return statement is invalid
-     */
-    private void processReturnStatement(String line) throws IllegalSjavaFileException {
-        if (!isInMethod()) {
-            throw new IllegalSjavaFileException("Return statement outside method");
-        }
-
-        if (!methodParser.isValidReturnStatement(line)) {
-            throw new IllegalSjavaFileException("Invalid return statement format");
-        }
-    }
-
-    /**
-     * Processes method calls
-     *
-     * @param line a single line of code
-     * @throws IllegalSjavaFileException if the method call is invalid
-     */
-    private void processMethodCall(String line) throws IllegalSjavaFileException {
-        if (!isInMethod()) {
-            throw new IllegalSjavaFileException("Method call outside method body");
-        }
-        methodParser.validateMethodCall(line);
     }
 
     /**
