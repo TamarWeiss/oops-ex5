@@ -5,6 +5,24 @@ import ex5.parser.Types;
 
 /** Handles type compatibility validation for s-Java */
 public class TypeValidator {
+    // Error messages
+    private static final String ERR_TYPE_CONVERSION = "Cannot convert %s to %s";
+    private static final String ERR_INVALID_BOOLEAN = "Invalid boolean value: ";
+    private static final String ERR_INVALID_CHAR = "Invalid char literal: ";
+    private static final String ERR_INVALID_STRING = "Invalid String literal: ";
+    private static final String ERR_INVALID_VALUE = "Invalid %s value: %s";
+    private static final String ERR_INVALID_CONDITION = "Invalid condition type: ";
+
+    // Literal values
+    private static final String TRUE_LITERAL = "true";
+    private static final String FALSE_LITERAL = "false";
+    private static final char SINGLE_QUOTE = '\'';
+    private static final char DOUBLE_QUOTE = '"';
+
+    // Constants for validation
+    private static final int CHAR_LITERAL_LENGTH = 3;
+    private static final int CHAR_LITERAL_SECOND = 2;
+
     /**
      * Checks if a value type can be assigned to a variable of target type
      *
@@ -17,7 +35,7 @@ public class TypeValidator {
                 (target == Types.BOOLEAN && (value == Types.INT || value == Types.DOUBLE));
 
         if (!isValid) {
-            throw new IllegalSjavaFileException("Cannot convert " + value + " to " + target);
+            throw new IllegalSjavaFileException(String.format(ERR_TYPE_CONVERSION, value, target));
         }
     }
 
@@ -38,27 +56,30 @@ public class TypeValidator {
                     Double.parseDouble(value);
                     break;
                 case BOOLEAN:
-                    if (!value.equals("true") && !value.equals("false")) {
+                    if (!value.equals(TRUE_LITERAL) && !value.equals(FALSE_LITERAL)) {
                         // Check if it's a numeric value
                         try {
                             Double.parseDouble(value);
                         } catch (NumberFormatException e) {
-                            throw new IllegalSjavaFileException("Invalid boolean value: " + value);
+                            throw new IllegalSjavaFileException(ERR_INVALID_BOOLEAN + value);
                         }
                     }
                     break;
                 case CHAR:
-                    if (value.length() != 3 || value.charAt(0) != '\'' || value.charAt(2) != '\'') {
-                        throw new IllegalSjavaFileException("Invalid char literal: " + value);
+                    if (value.length() != CHAR_LITERAL_LENGTH ||
+                            value.charAt(0) != SINGLE_QUOTE ||
+                            value.charAt(CHAR_LITERAL_SECOND) != SINGLE_QUOTE) {
+                        throw new IllegalSjavaFileException(ERR_INVALID_CHAR + value);
                     }
                     break;
                 case STRING:
-                    if (!value.startsWith("\"") || !value.endsWith("\"")) {
-                        throw new IllegalSjavaFileException("Invalid String literal: " + value);
+                    if (!value.startsWith(String.valueOf(DOUBLE_QUOTE)) ||
+                            !value.endsWith(String.valueOf(DOUBLE_QUOTE))) {
+                        throw new IllegalSjavaFileException(ERR_INVALID_STRING + value);
                     }
             }
         } catch (NumberFormatException e) {
-            throw new IllegalSjavaFileException("Invalid " + type + " value: " + value);
+            throw new IllegalSjavaFileException(String.format(ERR_INVALID_VALUE, type, value));
         }
     }
 
@@ -70,7 +91,7 @@ public class TypeValidator {
      */
     public void validateConditionType(Types valueType) throws IllegalSjavaFileException {
         if (valueType != Types.BOOLEAN && valueType != Types.INT && valueType != Types.DOUBLE) {
-            throw new IllegalSjavaFileException("Invalid condition type: " + valueType);
+            throw new IllegalSjavaFileException(ERR_INVALID_CONDITION + valueType);
         }
     }
 }

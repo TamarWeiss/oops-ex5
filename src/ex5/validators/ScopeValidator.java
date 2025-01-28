@@ -13,6 +13,26 @@ import java.util.Map;
  * Handles both global and local scopes, variable declarations, and access validation.
  */
 public class ScopeValidator {
+    // Constants for error messages
+    private static final String ERR_MAX_NESTING = "Maximum nesting level reached";
+    private static final String ERR_UNEXPECTED_SCOPE = "Unexpected scope end";
+    private static final String ERR_MISMATCHED_SCOPE = "Mismatched scope end";
+    private static final String ERR_PARAM_OUTSIDE = "Method parameter declaration outside method scope";
+    private static final String ERR_DUPLICATE_PARAM = "Duplicate parameter name: ";
+    private static final String ERR_DOUBLE_UNDERSCORE = "Variable names cannot start with double underscore: ";
+    private static final String ERR_VAR_REDECLARED = "Variable already declared in current scope: ";
+    private static final String ERR_GLOBAL_CONFLICT = "Global variable name conflict: ";
+    private static final String ERR_FINAL_REASSIGN = "Cannot reassign final variable: ";
+    private static final String ERR_VAR_NOT_DECLARED = "Variable not declared: ";
+    private static final String ERR_VAR_NOT_INIT = "Local variable %s not initialized";
+
+    // Identifier validation constants
+    private static final String DOUBLE_UNDERSCORE_PREFIX = "__";
+
+    // Scope limits
+    private static final int INITIAL_NESTING_LEVEL = 0;
+    private static final int MAX_NESTING_LEVEL = Integer.MAX_VALUE;
+
     /** Represents a variable and its properties */
     public static class Variable {
         private final Types type;
@@ -48,8 +68,7 @@ public class ScopeValidator {
     private final Scope globalScope = new Scope(false, new HashMap<>());
     private final Deque<Scope> scopeStack = new ArrayDeque<>();
     private boolean inMethod = false;
-    private int nestingLevel = 0;
-    private static final int MAX_NESTING_LEVEL = Integer.MAX_VALUE;
+    private int nestingLevel = INITIAL_NESTING_LEVEL;
 
     /**
      * Enters a new scope (method or block)
@@ -59,7 +78,7 @@ public class ScopeValidator {
      */
     public void enterScope(boolean isMethodScope) throws IllegalSjavaFileException {
         if (nestingLevel == MAX_NESTING_LEVEL) {
-            throw new IllegalSjavaFileException("Maximum nesting level reached");
+            throw new IllegalSjavaFileException(ERR_MAX_NESTING);
         }
         nestingLevel++;
         if (isMethodScope) {
@@ -77,13 +96,13 @@ public class ScopeValidator {
     public void exitScope(boolean isMethodEnd) throws IllegalSjavaFileException {
         nestingLevel--;
         if (scopeStack.isEmpty()) {
-            throw new IllegalSjavaFileException("Unexpected scope end");
+            throw new IllegalSjavaFileException(ERR_UNEXPECTED_SCOPE);
         }
 
         Scope scope = scopeStack.pop();
         if (isMethodEnd) {
             if (!scope.isMethodScope) {
-                throw new IllegalSjavaFileException("Mismatched scope end");
+                throw new IllegalSjavaFileException(ERR_MISMATCHED_SCOPE);
             }
             inMethod = false;
         }
@@ -99,12 +118,12 @@ public class ScopeValidator {
      */
     public void declareParameter(String name, Types type, boolean isFinal) throws IllegalSjavaFileException {
         if (scopeStack.isEmpty() || !scopeStack.peek().isMethodScope) {
-            throw new IllegalSjavaFileException("Method parameter declaration outside method scope");
+            throw new IllegalSjavaFileException(ERR_PARAM_OUTSIDE);
         }
 
         Scope methodScope = scopeStack.peek();
         if (methodScope.variables.containsKey(name)) {
-            throw new IllegalSjavaFileException("Duplicate parameter name: " + name);
+            throw new IllegalSjavaFileException(ERR_DUPLICATE_PARAM + name);
         }
 
         methodScope.variables.put(name, new Variable(type, isFinal, true));
@@ -120,26 +139,24 @@ public class ScopeValidator {
      * @throws IllegalSjavaFileException for invalid variable declaration
      */
     public void declareVariable(String name, Types type, boolean isFinal, boolean isInitialized)
-    throws IllegalSjavaFileException {
+            throws IllegalSjavaFileException {
         // Validate variable name doesn't start with double underscore
-        if (name.startsWith("__")) {
-            throw new IllegalSjavaFileException(
-                    "Variable names cannot start with double underscore: " + name
-            );
+        if (name.startsWith(DOUBLE_UNDERSCORE_PREFIX)) {
+            throw new IllegalSjavaFileException(ERR_DOUBLE_UNDERSCORE + name);
         }
 
         Scope currentScope = scopeStack.isEmpty() ? globalScope : scopeStack.peek();
 
         // Check for variable redeclaration in the current scope
         if (currentScope.variables.containsKey(name)) {
-            throw new IllegalSjavaFileException("Variable already declared in current scope: " + name);
+            throw new IllegalSjavaFileException(ERR_VAR_REDECLARED + name);
         }
 
         // For global variables, ensure no other global has the same name
         if (currentScope == globalScope) {
             try {
                 findVariable(name);
-                throw new IllegalSjavaFileException("Global variable name conflict: " + name);
+                throw new IllegalSjavaFileException(ERR_GLOBAL_CONFLICT + name);
             } catch (IllegalSjavaFileException ignored) { } //no global conflict found, continue
         }
 
@@ -156,7 +173,7 @@ public class ScopeValidator {
     public void validateAssignment(String name) throws IllegalSjavaFileException {
         Variable var = findVariable(name);
         if (var.isFinal() && var.isInitialized()) {
-            throw new IllegalSjavaFileException("Cannot reassign final variable: " + name);
+            throw new IllegalSjavaFileException(ERR_FINAL_REASSIGN + name);
         }
         var.setInitialized(true);
     }
@@ -175,7 +192,7 @@ public class ScopeValidator {
 
     public void validateVariableInitialization(String name) throws IllegalSjavaFileException {
         if (!findVariable(name).isInitialized()) {
-            throw new IllegalSjavaFileException("Local variable " + name + " not initialized");
+            throw new IllegalSjavaFileException(String.format(ERR_VAR_NOT_INIT, name));
         }
     }
 
@@ -215,7 +232,7 @@ public class ScopeValidator {
 
         // Check global scope
         if ((var = globalScope.variables.get(name)) == null) {
-            throw new IllegalSjavaFileException("Variable not declared: " + name);
+            throw new IllegalSjavaFileException(ERR_VAR_NOT_DECLARED + name);
         }
         return var;
     }
@@ -235,6 +252,6 @@ public class ScopeValidator {
         globalScope.variables.clear();
         scopeStack.clear();
         inMethod = false;
-        nestingLevel = 0;
+        nestingLevel = INITIAL_NESTING_LEVEL;
     }
 }

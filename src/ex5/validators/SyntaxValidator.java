@@ -7,13 +7,59 @@ import java.util.regex.Pattern;
 
 /** Validates syntax rules specific to s-Java */
 public class SyntaxValidator {
-    // Patterns for syntax validation
-    private static final String VALID_COMMENT = "^\\s*//.*$";
-    private static final String INVALID_COMMENT = "/\\*|\\*/|^\\s+//";
-    private static final String REQUIRED_WHITESPACE = "(?:void|final|" + Types.LEGAL_TYPES + ")(?!\\s+)\\w+";
-    private static final String MISSING_REQUIRED_SPACE = "(void|final|" + Types.LEGAL_TYPES + ")(\\w+)";
-    private static final String INVALID_METHOD_DECLARATION = "\\s*(" + Types.LEGAL_TYPES + ")"
-                                                             + "\\s+\\w+\\s*\\(.*";
+    // Regex patterns for comment validation
+    private static final String PATTERN_COMMENT_START = "^\\s*//";
+    private static final String PATTERN_COMMENT_BODY = ".*$";
+    private static final String PATTERN_VALID_COMMENT = PATTERN_COMMENT_START + PATTERN_COMMENT_BODY;
+
+    // Invalid comment patterns
+    private static final String MULTI_LINE_START = "/\\*";
+    private static final String MULTI_LINE_END = "\\*/";
+    private static final String LEADING_SPACE_COMMENT = "^\\s+//";
+    private static final String PATTERN_INVALID_COMMENT = MULTI_LINE_START + "|" + MULTI_LINE_END + "|" + LEADING_SPACE_COMMENT;
+
+    // Whitespace validation patterns
+    private static final String PATTERN_KEYWORD_GROUP = "(?:void|final|" + Types.LEGAL_TYPES + ")";
+    private static final String PATTERN_NO_SPACE = "(?!\\s+)";
+    private static final String PATTERN_WORD = "\\w+";
+    private static final String PATTERN_REQUIRED_WHITESPACE = PATTERN_KEYWORD_GROUP + PATTERN_NO_SPACE + PATTERN_WORD;
+
+    // Missing space pattern components
+    private static final String PATTERN_TYPE_GROUP = "(void|final|" + Types.LEGAL_TYPES + ")";
+    private static final String PATTERN_WORD_GROUP = "(\\w+)";
+    private static final String PATTERN_MISSING_REQUIRED_SPACE = PATTERN_TYPE_GROUP + PATTERN_WORD_GROUP;
+
+    // Method declaration pattern components
+    private static final String PATTERN_TYPE = "(" + Types.LEGAL_TYPES + ")";
+    private static final String PATTERN_METHOD_PARAMS = "\\s*\\(.*";
+    private static final String PATTERN_INVALID_METHOD = "\\s*" + PATTERN_TYPE + "\\s+" + PATTERN_WORD + PATTERN_METHOD_PARAMS;
+
+    // Operators pattern
+    private static final String PATTERN_OPERATORS = ".*[+\\-*/%].*";
+    private static final String PATTERN_STRING_LITERAL = ".*['\"].*";
+
+    // Array syntax
+    private static final String ARRAY_OPEN = "[";
+    private static final String ARRAY_CLOSE = "]";
+
+    // Error messages
+    private static final String ERR_MULTILINE_COMMENT = "Multi-line comments are not allowed";
+    private static final String ERR_INLINE_COMMENT = "Inline comments are not allowed in s-Java";
+    private static final String ERR_INVALID_COMMENT = "Invalid comment format";
+    private static final String ERR_MISSING_WHITESPACE = "Missing required whitespace after keyword";
+    private static final String ERR_INVALID_METHOD = "Invalid declaration: appears to be a method declaration with non-void return type. " +
+            "Only void methods are supported in s-Java";
+    private static final String ERR_MISSING_TYPE_SPACE = "Missing required space between type and identifier";
+    private static final String ERR_INVALID_COMMENT_SYNTAX = "Invalid comment syntax";
+    private static final String ERR_NO_OPERATORS = "Operators are not allowed in s-Java";
+    private static final String ERR_NO_ARRAYS = "Arrays are not supported in s-Java";
+
+    // Compiled patterns for performance
+    private static final Pattern VALID_COMMENT = Pattern.compile(PATTERN_VALID_COMMENT);
+    private static final Pattern INVALID_COMMENT = Pattern.compile(PATTERN_INVALID_COMMENT);
+    private static final Pattern REQUIRED_WHITESPACE = Pattern.compile(PATTERN_REQUIRED_WHITESPACE);
+    private static final Pattern MISSING_REQUIRED_SPACE = Pattern.compile(".*" + PATTERN_MISSING_REQUIRED_SPACE + ".*");
+    private static final Pattern INVALID_METHOD_DECLARATION = Pattern.compile(PATTERN_INVALID_METHOD);
 
     /**
      * Validates general line syntax
@@ -23,37 +69,33 @@ public class SyntaxValidator {
      */
     public void validateLineSyntax(String line) throws IllegalSjavaFileException {
         // Check for illegal comment styles
-        if (line.contains("/*") || line.contains("*/")) {
-            throw new IllegalSjavaFileException("Multi-line comments are not allowed");
+        if (line.contains(MULTI_LINE_START) || line.contains(MULTI_LINE_END)) {
+            throw new IllegalSjavaFileException(ERR_MULTILINE_COMMENT);
         }
 
         // Now check for inline comments in non-comment lines
         if (line.contains("//")) {
-            throw new IllegalSjavaFileException("Inline comments are not allowed in s-Java");
+            throw new IllegalSjavaFileException(ERR_INLINE_COMMENT);
         }
 
         // Check for invalid comment placement
-        if (Pattern.matches(INVALID_COMMENT, line)) {
-            throw new IllegalSjavaFileException("Invalid comment format");
+        if (INVALID_COMMENT.matcher(line).matches()) {
+            throw new IllegalSjavaFileException(ERR_INVALID_COMMENT);
         }
 
         // Check required whitespace after keywords
-        if (Pattern.matches(REQUIRED_WHITESPACE, line)) {
-            throw new IllegalSjavaFileException("Missing required whitespace after keyword");
+        if (REQUIRED_WHITESPACE.matcher(line).matches()) {
+            throw new IllegalSjavaFileException(ERR_MISSING_WHITESPACE);
         }
 
-        if (line.matches(INVALID_METHOD_DECLARATION)) {
-            throw new IllegalSjavaFileException(
-                    "Invalid declaration: appears to be a method declaration with non-void return type. " +
-                    "Only void methods are supported in s-Java"
-            );
+        if (INVALID_METHOD_DECLARATION.matcher(line).matches()) {
+            throw new IllegalSjavaFileException(ERR_INVALID_METHOD);
         }
-
     }
 
     public void validateRequiredSpaces(String line) throws IllegalSjavaFileException {
-        if (line.matches(".*" + MISSING_REQUIRED_SPACE + ".*")) {
-            throw new IllegalSjavaFileException("Missing required space between type and identifier");
+        if (MISSING_REQUIRED_SPACE.matcher(line).matches()) {
+            throw new IllegalSjavaFileException(ERR_MISSING_TYPE_SPACE);
         }
     }
 
@@ -64,8 +106,8 @@ public class SyntaxValidator {
      * @throws IllegalSjavaFileException if comment syntax is invalid
      */
     public void validateCommentSyntax(String line) throws IllegalSjavaFileException {
-        if (!Pattern.matches(VALID_COMMENT, line)) {
-            throw new IllegalSjavaFileException("Invalid comment syntax");
+        if (!VALID_COMMENT.matcher(line).matches()) {
+            throw new IllegalSjavaFileException(ERR_INVALID_COMMENT_SYNTAX);
         }
     }
 
@@ -77,8 +119,8 @@ public class SyntaxValidator {
      */
     public void validateNoOperators(String line) throws IllegalSjavaFileException {
         // Check for arithmetic and string operators
-        if (line.matches(".*[+\\-*/%].*") && !line.matches(".*['\"].*")) {
-            throw new IllegalSjavaFileException("Operators are not allowed in s-Java");
+        if (line.matches(PATTERN_OPERATORS) && !line.matches(PATTERN_STRING_LITERAL)) {
+            throw new IllegalSjavaFileException(ERR_NO_OPERATORS);
         }
     }
 
@@ -89,8 +131,8 @@ public class SyntaxValidator {
      * @throws IllegalSjavaFileException if array syntax is found
      */
     public void validateNoArrays(String line) throws IllegalSjavaFileException {
-        if (line.contains("[") || line.contains("]")) {
-            throw new IllegalSjavaFileException("Arrays are not supported in s-Java");
+        if (line.contains(ARRAY_OPEN) || line.contains(ARRAY_CLOSE)) {
+            throw new IllegalSjavaFileException(ERR_NO_ARRAYS);
         }
     }
 }
