@@ -63,7 +63,6 @@ public class ValidationManager {
         try {
             // Basic syntax validation first
             syntaxValidator.validateLineSyntax(line);
-            syntaxValidator.validateLineEnding(line, lineType);
 
             // Process based on a line type
             switch (lineType) {
