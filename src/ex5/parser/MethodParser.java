@@ -17,29 +17,22 @@ public class MethodParser extends BaseParser {
     private final List<Method> methods = new ArrayList<>();
     private final ScopeValidator scopeValidator;
 
+    /**
+     * The class main constructor
+     *
+     * @param scopeValidator A ScopeValidator instance
+     */
     public MethodParser(ScopeValidator scopeValidator) {
         this.scopeValidator = scopeValidator;
     }
 
-    private Method getMethod(String methodName) {
-        for (Method method : methods) {
-            if (methodName.equals(method.name())) {
-                return method;
-            }
-        }
-        return null;
-    }
-
-    private Variable parseParameter(String param) throws IllegalSjavaFileException {
-        String[] paramParts = param.split("\\s+");
-        boolean isFinal = paramParts[0].equals("final");
-        int typeIndex = isFinal ? 1 : 0;
-
-        Types type = Types.getType(paramParts[typeIndex]);
-        String name = paramParts[typeIndex + 1];
-        return new Variable(name, type, isFinal, true);
-    }
-
+    /**
+     * Converts an array of parameter strings into a list of Variable instances
+     *
+     * @param params an array of parameters
+     * @return a list of their Variable equivalents
+     * @throws IllegalSjavaFileException if any of the parameters given isn't formatted correctly
+     */
     public List<Variable> parseParameters(String[] params) throws IllegalSjavaFileException {
         List<Variable> parameters = new ArrayList<>();
         for (String param : params) {
@@ -69,36 +62,6 @@ public class MethodParser extends BaseParser {
         String[] params = extractParameters(line);
         validateParameters(params); // Validate parameters if present
         methods.add(new Method(methodName, parseParameters(params)));
-    }
-
-    /**
-     * Validates method parameters
-     *
-     * @param params The parameters to validate
-     * @throws IllegalSjavaFileException if the parameters are invalid
-     */
-    private void validateParameters(String[] params) throws IllegalSjavaFileException {
-        for (String param : params) {
-            String[] parts = param.split("\\s+");
-
-            // Check for 2 or 3 parts (final modifier is optional)
-            if (parts.length < 2 || parts.length > 3) {
-                throw new IllegalSjavaFileException("Invalid parameter format: " + param);
-            }
-
-            int typeIndex = parts.length == 3 ? 1 : 0;
-
-            // Validate final modifier if present
-            if (parts.length == 3 && !parts[0].equals("final")) {
-                throw new IllegalSjavaFileException("Invalid parameter modifier: " + parts[0]);
-            }
-
-            // Validate type
-            Types.getType(parts[typeIndex]);
-
-            // Validate parameter name
-            validateIdentifier(parts[typeIndex + 1]);
-        }
     }
 
     /**
@@ -157,6 +120,70 @@ public class MethodParser extends BaseParser {
                 );
             }
             scopeValidator.validateVariableInitialization(params[i]);
+        }
+    }
+
+    //----------------------- private method -----------------------------------------
+
+    /**
+     * Searched and return a Method instance with the received name
+     *
+     * @param methodName the method's name
+     * @return the method's instance, null if such a method does not exist
+     */
+    private Method getMethod(String methodName) {
+        for (Method method : methods) {
+            if (methodName.equals(method.name())) {
+                return method;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Converts a parameter string into a variable instance
+     *
+     * @param param the parameter as a string
+     * @return it's variable equivalent
+     * @throws IllegalSjavaFileException if the parameter's format is incorrect in any way
+     */
+    private Variable parseParameter(String param) throws IllegalSjavaFileException {
+        String[] paramParts = param.split("\\s+");
+        boolean isFinal = paramParts[0].equals("final");
+        int typeIndex = isFinal ? 1 : 0;
+
+        Types type = Types.getType(paramParts[typeIndex]);
+        String name = paramParts[typeIndex + 1];
+        return new Variable(name, type, isFinal, true);
+    }
+
+    /**
+     * Validates method parameters
+     *
+     * @param params The parameters to validate
+     * @throws IllegalSjavaFileException if the parameters are invalid
+     */
+    private void validateParameters(String[] params) throws IllegalSjavaFileException {
+        for (String param : params) {
+            String[] parts = param.split("\\s+");
+
+            // Check for 2 or 3 parts (final modifier is optional)
+            if (parts.length < 2 || parts.length > 3) {
+                throw new IllegalSjavaFileException("Invalid parameter format: " + param);
+            }
+
+            int typeIndex = parts.length == 3 ? 1 : 0;
+
+            // Validate final modifier if present
+            if (parts.length == 3 && !parts[0].equals("final")) {
+                throw new IllegalSjavaFileException("Invalid parameter modifier: " + parts[0]);
+            }
+
+            // Validate type
+            Types.getType(parts[typeIndex]);
+
+            // Validate parameter name
+            validateIdentifier(parts[typeIndex + 1]);
         }
     }
 }
