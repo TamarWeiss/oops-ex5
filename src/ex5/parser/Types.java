@@ -19,6 +19,7 @@ public enum Types {
     public static final String LEGAL_TYPES = String.join(
             "|", Arrays.stream(Types.values()).map(Types::toString).toList()
     );
+    private static final String UNKNOWN_TYPE_ERR = "Unknown type: ";
     
     private final String type;
 
@@ -48,6 +49,6 @@ public enum Types {
                 return value;
             }
         }
-        throw new IllegalSjavaFileException("Unknown type: " + type);
+        throw new IllegalSjavaFileException(UNKNOWN_TYPE_ERR + type);
     }
 }

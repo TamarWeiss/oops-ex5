@@ -12,6 +12,34 @@ import java.util.List;
  * also checks for valid return statements and method calls
  */
 public class MethodParser extends BaseParser {
+    private static final String METHOD_NAME_REGEX = "^[a-zA-Z]\\w*$";
+    private static final String RETURN_STATEMENT_REGEX = "^return\\s*;$";
+    private static final String PARAMETER_SEPARATOR = ",";
+    private static final String WHITESPACE_REGEX = "\\s+";
+    private static final String PARAMETER_SEPARATOR_REGEX = "\\s*,\\s*";
+    private static final String FINAL_KEYWORD = "final";
+    private static final String OPEN_PAREN = "(";
+    private static final String CLOSE_PAREN = ")";
+    private static final int MIN_PARTS = 2;
+    private static final int MAX_PARTS = 3;
+    private static final int FINAL_MODIFIER_INDEX = 1;
+
+
+    // Error messages
+    private static final String ERR_NESTED_METHODS = "Nested method declarations are not allowed";
+    private static final String ERR_METHOD_OVERLOAD = "Method overloading is not allowed: ";
+    private static final String ERR_INVALID_METHOD_NAME = "Invalid method name: ";
+    private static final String ERR_RETURN_OUTSIDE = "Return statement outside method";
+    private static final String ERR_INVALID_RETURN = "Invalid return statement format";
+    private static final String ERR_CALL_OUTSIDE = "Method call outside method body";
+    private static final String ERR_METHOD_NOT_FOUND = "Method not found: ";
+    private static final String ERR_PARAM_COUNT = "Incompatible number of parameters: expected ";
+    private static final String ERR_PARAM_TYPES = "Incompatible parameter types: expected ";
+    private static final String ERR_PARAM_FORMAT = "Invalid parameter format: ";
+    private static final String ERR_PARAM_MODIFIER = "Invalid parameter modifier: ";
+    private static final String GOT = ", got ";
+
+
     private record Method(String name, List<Variable> parameters) { }
 
     private final List<Method> methods = new ArrayList<>();
@@ -34,19 +62,19 @@ public class MethodParser extends BaseParser {
      */
     public void validateMethodDeclaration(String line) throws IllegalSjavaFileException {
         if (scopeValidator.isInMethod()) {
-            throw new IllegalSjavaFileException("Nested method declarations are not allowed");
+            throw new IllegalSjavaFileException(ERR_NESTED_METHODS);
         }
 
         String methodName = getMethodName(line, LineType.METHOD_DECLARATION);
 
         // Check for method overloading (not allowed in s-Java)
         if (getMethod(methodName) != null) {
-            throw new IllegalSjavaFileException("Method overloading is not allowed: " + methodName);
+            throw new IllegalSjavaFileException(ERR_METHOD_OVERLOAD + methodName);
         }
 
         // Validate method name (must start with a letter)
-        if (!methodName.matches("^[a-zA-Z]\\w*$")) {
-            throw new IllegalSjavaFileException("Invalid method name: " + methodName);
+        if (!methodName.matches(METHOD_NAME_REGEX)) {
+            throw new IllegalSjavaFileException(ERR_INVALID_METHOD_NAME + methodName);
         }
 
         String[] params = extractParameters(line);
@@ -68,11 +96,11 @@ public class MethodParser extends BaseParser {
      */
     public void processReturnStatement(String line) throws IllegalSjavaFileException {
         if (!scopeValidator.isInMethod()) {
-            throw new IllegalSjavaFileException("Return statement outside method");
+            throw new IllegalSjavaFileException(ERR_RETURN_OUTSIDE);
         }
 
-        if (!line.trim().matches("^return\\s*;$")) {
-            throw new IllegalSjavaFileException("Invalid return statement format");
+        if (!line.trim().matches(RETURN_STATEMENT_REGEX)) {
+            throw new IllegalSjavaFileException(ERR_INVALID_RETURN);
         }
     }
 
@@ -84,20 +112,20 @@ public class MethodParser extends BaseParser {
      */
     public void validateMethodCall(String line) throws IllegalSjavaFileException {
         if (!scopeValidator.isInMethod()) {
-            throw new IllegalSjavaFileException("Method call outside method body");
+            throw new IllegalSjavaFileException(ERR_CALL_OUTSIDE);
         }
 
         String methodName = getMethodName(line, LineType.METHOD_CALL);
         Method method = getMethod(methodName);
         if (method == null) {
-            throw new IllegalSjavaFileException("Method not found: " + methodName);
+            throw new IllegalSjavaFileException(ERR_METHOD_NOT_FOUND + methodName);
         }
 
         String[] params = extractParameters(line);
         int expectedLength = method.parameters.size();
         if (params.length != expectedLength) {
             throw new IllegalSjavaFileException(
-                    "Incompatible number of parameters: expected " + expectedLength + ", got " + params.length
+                    ERR_PARAM_COUNT + expectedLength + GOT + params.length
             );
         }
 
@@ -106,7 +134,7 @@ public class MethodParser extends BaseParser {
             Types receivedType = scopeValidator.getVariableType(params[i]);
             if (!expectedType.equals(receivedType)) {
                 throw new IllegalSjavaFileException(
-                        "Incompatible parameter types: expected " + expectedType + ", got " + receivedType
+                        ERR_PARAM_TYPES + expectedType + GOT + receivedType
                 );
             }
             scopeValidator.validateVariableInitialization(params[i]);
@@ -138,8 +166,8 @@ public class MethodParser extends BaseParser {
      * @return the method's name
      */
     private String getMethodName(String line, LineType lineType) {
-        String start = line.substring(0, line.indexOf('(')).trim();
-        return lineType == LineType.METHOD_DECLARATION ? start.split("\\s+")[1] : start;
+        String start = line.substring(0, line.indexOf(OPEN_PAREN)).trim();
+        return lineType == LineType.METHOD_DECLARATION ? start.split(WHITESPACE_REGEX)[1] : start;
     }
 
     /**
@@ -150,9 +178,9 @@ public class MethodParser extends BaseParser {
      */
     private String[] extractParameters(String line) {
         String params = line.substring(
-                line.indexOf('(') + 1, line.lastIndexOf(')')
+                line.indexOf(OPEN_PAREN) + 1, line.lastIndexOf(CLOSE_PAREN)
         ).trim();
-        return params.isEmpty() ? new String[0] : params.split("\\s*,\\s*");
+        return params.isEmpty() ? new String[0] : params.split(PARAMETER_SEPARATOR_REGEX);
     }
 
     /**
@@ -163,8 +191,8 @@ public class MethodParser extends BaseParser {
      * @throws IllegalSjavaFileException if the parameter's format is incorrect in any way
      */
     private Variable parseParameter(String param) throws IllegalSjavaFileException {
-        String[] paramParts = param.split("\\s+");
-        boolean isFinal = paramParts[0].equals("final");
+        String[] paramParts = param.split(WHITESPACE_REGEX);
+        boolean isFinal = paramParts[0].equals(FINAL_KEYWORD);
         int typeIndex = isFinal ? 1 : 0;
 
         Types type = Types.getType(paramParts[typeIndex]);
@@ -181,18 +209,18 @@ public class MethodParser extends BaseParser {
      */
     private void validateParameters(String[] params) throws IllegalSjavaFileException {
         for (String param : params) {
-            String[] parts = param.split("\\s+");
+            String[] parts = param.split(WHITESPACE_REGEX);
 
             // Check for 2 or 3 parts (final modifier is optional)
-            if (parts.length < 2 || parts.length > 3) {
-                throw new IllegalSjavaFileException("Invalid parameter format: " + param);
+            if (parts.length < MIN_PARTS || parts.length > MAX_PARTS) {
+                throw new IllegalSjavaFileException(ERR_PARAM_FORMAT + param);
             }
 
-            int typeIndex = parts.length == 3 ? 1 : 0;
+            int typeIndex = parts.length == MAX_PARTS ? 1 : 0;
 
             // Validate final modifier if present
-            if (parts.length == 3 && !parts[0].equals("final")) {
-                throw new IllegalSjavaFileException("Invalid parameter modifier: " + parts[0]);
+            if (parts.length == MAX_PARTS && !parts[0].equals(FINAL_KEYWORD)) {
+                throw new IllegalSjavaFileException(ERR_PARAM_MODIFIER + parts[0]);
             }
 
             // Validate type

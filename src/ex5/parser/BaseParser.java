@@ -10,6 +10,8 @@ import java.util.regex.Pattern;
  */
 public abstract class BaseParser {
     protected static final String IDENTIFIER = "([a-zA-Z]\\w*|_[a-zA-Z\\d]\\w*)";
+    private static final String EMPTY_IDENTIFIER_ERR = "Empty identifier";
+    private static final String INVALID_IDENTIFIER_ERR = "Invalid identifier: ";
 
     /**
      * Validates that a given identifier follows s-Java naming rules
@@ -19,11 +21,11 @@ public abstract class BaseParser {
      */
     public void validateIdentifier(String identifier) throws IllegalSjavaFileException {
         if (identifier == null || identifier.isEmpty()) {
-            throw new IllegalSjavaFileException("Empty identifier");
+            throw new IllegalSjavaFileException(EMPTY_IDENTIFIER_ERR);
         }
 
         if (!Pattern.matches(IDENTIFIER, identifier)) {
-            throw new IllegalSjavaFileException("Invalid identifier: " + identifier);
+            throw new IllegalSjavaFileException(INVALID_IDENTIFIER_ERR + identifier);
         }
     }
 }

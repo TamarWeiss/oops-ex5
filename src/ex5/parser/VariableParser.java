@@ -9,7 +9,9 @@ public class VariableParser extends BaseParser {
     private static final String DECLARATION_PATTERN = "^\\s*(final\\s+)?(" + Types.LEGAL_TYPES + ")\\s+"
             + "(" + IDENTIFIER + "(?:\\s*=\\s*[^,;]+)?" + "(?:\\s*,\\s*" + IDENTIFIER +
             "(?:\\s*=\\s*[^,;]+)?)*)" + "\\s*;\\s*$";
-
+    private static final String ERR_INVALID_FORMAT = "Invalid variable declaration format";
+    private static final String ERR_UNDERSCORE = "Variable names cannot start with double underscore";
+    private static final String UNDERSCORE_PATTERN = ".*\\b__\\w+.*";
     /**
      * Validates a variable declaration line according to s-Java rules
      *
@@ -18,12 +20,12 @@ public class VariableParser extends BaseParser {
      */
     public void validateDeclaration(String line) throws IllegalSjavaFileException {
         if (!Pattern.matches(DECLARATION_PATTERN, line)) {
-            throw new IllegalSjavaFileException("Invalid variable declaration format");
+            throw new IllegalSjavaFileException(ERR_INVALID_FORMAT);
         }
 
         // Verify no double underscores at the start
-        if (line.matches(".*\\b__\\w+.*")) {
-            throw new IllegalSjavaFileException("Variable names cannot start with double underscore");
+        if (line.matches(UNDERSCORE_PATTERN)) {
+            throw new IllegalSjavaFileException(ERR_UNDERSCORE);
         }
 
         // Extract and validate each variable name
