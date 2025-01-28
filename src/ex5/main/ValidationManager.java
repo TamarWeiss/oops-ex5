@@ -22,13 +22,7 @@ public class ValidationManager {
     private final TypeValidator typeValidator;
     private boolean lastLineWasReturn;
 
-    // Patterns for specific validations
     private static final Pattern CONDITION_PATTERN = Pattern.compile("\\((.*?)\\)");
-    private static final Pattern VARIABLE_ASSIGNMENT_PATTERN = Pattern.compile(
-            "^\\s*(\\w+)\\s*=\\s*(.+)\\s*$"
-    );
-
-    // Patterns for specific validations
     private static final String LOGICAL_OPERATOR = "\\s*(\\|\\||&&)\\s*";
 
     /**
@@ -167,20 +161,16 @@ public class ValidationManager {
      * @throws IllegalSjavaFileException if the assignment format is invalid
      */
     private void processVariableAssignment(String line) throws IllegalSjavaFileException {
-        String[] assignments = line.substring(0, line.length() - 1).split(",");
+        line = line.trim();
+        String[] assignments = line.substring(0, line.length() - 1).split("\\s*,\\s*");
 
         for (String assignment : assignments) {
-            Matcher matcher = VARIABLE_ASSIGNMENT_PATTERN.matcher(assignment);
-            if (!matcher.matches()) {
+            String[] parts = assignment.split("\\s*=\\s*");
+            if (parts.length != 2) {
                 throw new IllegalSjavaFileException("Invalid assignment format");
             }
-
-            String varName = matcher.group(1);
-            String value = matcher.group(2).trim();
-            if (value.endsWith(";")) {
-                value = value.substring(0, value.length() - 1).trim();
-            }
-
+            String varName = parts[0];
+            String value = parts[1];
             Types varType = scopeValidator.getVariableType(varName);
 
             try {
