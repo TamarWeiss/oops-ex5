@@ -6,10 +6,15 @@ import java.util.Arrays;
 
 /** Represents valid primitive types in s-Java */
 public enum Types {
+    /** int type */
     INT("int"),
+    /** double type */
     DOUBLE("double"),
+    /** String type */
     STRING("String"),
+    /** boolean type */
     BOOLEAN("boolean"),
+    /** char type */
     CHAR("char");
 
     // Legal types in s-Java
