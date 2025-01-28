@@ -40,19 +40,9 @@ public class ScopeValidator {
     }
 
     /** Represents a single scope level */
-    private static class Scope {
-        final Map<String, Variable> variables;
-        final boolean isMethodScope;
-        final Set<String> methodParameters;
+    private record Scope(boolean isMethodScope, Map<String, Variable> variables) { }
 
-        Scope(boolean isMethodScope) {
-            this.variables = new HashMap<>();
-            this.isMethodScope = isMethodScope;
-            this.methodParameters = isMethodScope ? new HashSet<>() : null;
-        }
-    }
-
-    private final Scope globalScope = new Scope(false);
+    private final Scope globalScope = new Scope(false, new HashMap<>());
     private final Deque<Scope> scopeStack = new ArrayDeque<>();
     private boolean inMethod = false;
     private int nestingLevel = 0;
@@ -72,7 +62,7 @@ public class ScopeValidator {
         if (isMethodScope) {
             inMethod = true;
         }
-        scopeStack.push(new Scope(isMethodScope));
+        scopeStack.push(new Scope(isMethodScope, new HashMap<>()));
     }
 
     /**
@@ -110,11 +100,10 @@ public class ScopeValidator {
         }
 
         Scope methodScope = scopeStack.peek();
-        if (methodScope.methodParameters.contains(name)) {
+        if (methodScope.variables.containsKey(name)) {
             throw new IllegalSjavaFileException("Duplicate parameter name: " + name);
         }
 
-        methodScope.methodParameters.add(name);
         methodScope.variables.put(name, new Variable(type, isFinal, true));
     }
 
