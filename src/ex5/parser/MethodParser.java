@@ -170,7 +170,7 @@ public class MethodParser extends BaseParser {
         Types type = Types.getType(paramParts[typeIndex]);
         String name = paramParts[typeIndex + 1];
         scopeValidator.declareParameter(name, type, isFinal);
-        return new Variable(name, type, isFinal, true);
+        return new Variable(type, isFinal, true);
     }
 
     /**

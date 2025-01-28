@@ -12,7 +12,6 @@ import java.util.*;
 public class ScopeValidator {
     /** Represents a variable and its properties */
     public static class Variable {
-        private String name = "";
         private final Types type;
         private final boolean isFinal;
         private boolean isInitialized;
@@ -23,21 +22,12 @@ public class ScopeValidator {
             this.isInitialized = isInitialized;
         }
 
-        public Variable(String name, Types type, boolean isFinal, boolean isInitialized) {
-            this(type, isFinal, isInitialized);
-            this.name = name;
-        }
-
         public Types getType() {
             return type;
         }
 
         public boolean isFinal() {
             return isFinal;
-        }
-
-        public String getName() {
-            return name;
         }
 
         public boolean isInitialized() {
