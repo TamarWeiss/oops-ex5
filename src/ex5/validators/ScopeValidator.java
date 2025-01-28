@@ -11,15 +11,41 @@ import java.util.*;
  */
 public class ScopeValidator {
     /** Represents a variable and its properties */
-    private static class Variable {
-        final Types type;
-        final boolean isFinal;
-        boolean isInitialized;
+    public static class Variable {
+        private String name = "";
+        private final Types type;
+        private final boolean isFinal;
+        private boolean isInitialized;
 
-        Variable(Types type, boolean isFinal, boolean isInitialized) {
+        public Variable(Types type, boolean isFinal, boolean isInitialized) {
             this.type = type;
             this.isFinal = isFinal;
             this.isInitialized = isInitialized;
+        }
+
+        public Variable(String name, Types type, boolean isFinal, boolean isInitialized) {
+            this(type, isFinal, isInitialized);
+            this.name = name;
+        }
+
+        public Types getType() {
+            return type;
+        }
+
+        public boolean isFinal() {
+            return isFinal;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public boolean isInitialized() {
+            return isInitialized;
+        }
+
+        public void setInitialized(boolean initialized) {
+            isInitialized = initialized;
         }
     }
 
@@ -154,10 +180,10 @@ public class ScopeValidator {
      */
     public void validateAssignment(String name) throws IllegalSjavaFileException {
         Variable var = findVariable(name);
-        if (var.isFinal && var.isInitialized) {
+        if (var.isFinal() && var.isInitialized()) {
             throw new IllegalSjavaFileException("Cannot reassign final variable: " + name);
         }
-        var.isInitialized = true;
+        var.setInitialized(true);
     }
 
     /**
@@ -169,11 +195,11 @@ public class ScopeValidator {
      *                                   or improper use of uninitialized variable
      */
     public Types getVariableType(String name) throws IllegalSjavaFileException {
-        return findVariable(name).type;
+        return findVariable(name).getType();
     }
 
     public void validateVariableInitialization(String name) throws IllegalSjavaFileException {
-        if (!findVariable(name).isInitialized) {
+        if (!findVariable(name).isInitialized()) {
             throw new IllegalSjavaFileException("Local variable " + name + " not initialized");
         }
     }

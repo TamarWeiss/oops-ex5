@@ -3,6 +3,7 @@ package ex5.main;
 import ex5.IllegalSjavaFileException;
 import ex5.parser.*;
 import ex5.validators.ScopeValidator;
+import ex5.validators.ScopeValidator.Variable;
 import ex5.validators.SyntaxValidator;
 import ex5.validators.TypeValidator;
 
@@ -37,10 +38,10 @@ public class ValidationManager {
      */
     public ValidationManager() {
         this.lineParser = new LineParser();
-        this.methodParser = new MethodParser();
+        this.scopeValidator = new ScopeValidator();
+        this.methodParser = new MethodParser(scopeValidator);
         this.variableParser = new VariableParser();
         this.syntaxValidator = new SyntaxValidator();
-        this.scopeValidator = new ScopeValidator();
         this.typeValidator = new TypeValidator();
         this.lastLineWasReturn = false;
     }
@@ -93,9 +94,10 @@ public class ValidationManager {
         return scopeValidator.isInMethod();
     }
 
-    /** Reset all validators' state
+    /**
+     * Reset all validators' state
      * makes false the last line
-     * */
+     */
     public void reset() {
         lastLineWasReturn = false;
         scopeValidator.reset();
@@ -116,14 +118,8 @@ public class ValidationManager {
 
             // Process method parameters
             String[] params = methodParser.extractParameters(line);
-            for (String param : params) {
-                String[] paramParts = param.split("\\s+");
-                boolean isFinal = paramParts[0].equals("final");
-                int typeIndex = isFinal ? 1 : 0;
-
-                Types type = Types.getType(paramParts[typeIndex]);
-                String name = paramParts[typeIndex + 1];
-                scopeValidator.declareParameter(name, type, isFinal);
+            for (Variable variable: methodParser.parseParameters(params)) {
+                scopeValidator.declareParameter(variable.getName(), variable.getType(), variable.isFinal());
             }
         }
         else {
@@ -306,12 +302,7 @@ public class ValidationManager {
         if (!isInMethod()) {
             throw new IllegalSjavaFileException("Method call outside method body");
         }
-        String[] params = methodParser.validateMethodCall(line);
-
-        for (String param : params) {
-            scopeValidator.getVariableType(param);
-            scopeValidator.validateVariableInitialization(param);
-        }
+        methodParser.validateMethodCall(line);
     }
 
     /**
@@ -326,7 +317,7 @@ public class ValidationManager {
 
         // Check for invalid operator placement at start/end
         if (condition.startsWith("||") || condition.startsWith("&&") ||
-                condition.endsWith("||") || condition.endsWith("&&")) {
+            condition.endsWith("||") || condition.endsWith("&&")) {
             throw new IllegalSjavaFileException("Logical operators cannot be at start or end of condition");
         }
 

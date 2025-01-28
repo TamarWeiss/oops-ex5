@@ -1,22 +1,52 @@
 package ex5.parser;
 
 import ex5.IllegalSjavaFileException;
+import ex5.validators.ScopeValidator;
+import ex5.validators.ScopeValidator.Variable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-/** Parser for handling method declarations and bodies in s-Java
- * also checks for valid return statements and method calls */
+/**
+ * Parser for handling method declarations and bodies in s-Java
+ * also checks for valid return statements and method calls
+ */
 public class MethodParser extends BaseParser {
-    // Method declaration pattern
-    private static final String METHOD_PATTERN = "^\\s*void\\s+([a-zA-Z]\\w*)\\s*\\(\\s*(" +
-            "(?:(?:final\\s+)?(?:" + Types.LEGAL_TYPES + ")\\s+" + IDENTIFIER +
-            "(?:\\s*,\\s*(?:final\\s+)?(?:" + Types.LEGAL_TYPES + ")\\s+" + IDENTIFIER + ")*" +
-            ")?\\s*)\\)\\s*\\{\\s*$";
+    private record Method(String name, List<Variable> parameters) { }
 
-    private final List<String> methodNames = new ArrayList<>();
+    private final List<Method> methods = new ArrayList<>();
+    private final ScopeValidator scopeValidator;
+
+    public MethodParser(ScopeValidator scopeValidator) {
+        this.scopeValidator = scopeValidator;
+    }
+
+    private Method getMethod(String methodName) {
+        for (Method method : methods) {
+            if (methodName.equals(method.name())) {
+                return method;
+            }
+        }
+        return null;
+    }
+
+    private Variable parseParameter(String param) throws IllegalSjavaFileException {
+        String[] paramParts = param.split("\\s+");
+        boolean isFinal = paramParts[0].equals("final");
+        int typeIndex = isFinal ? 1 : 0;
+
+        Types type = Types.getType(paramParts[typeIndex]);
+        String name = paramParts[typeIndex + 1];
+        return new Variable(name, type, isFinal, true);
+    }
+
+    public List<Variable> parseParameters(String[] params) throws IllegalSjavaFileException {
+        List<Variable> parameters = new ArrayList<>();
+        for (String param : params) {
+            parameters.add(parseParameter(param));
+        }
+        return parameters;
+    }
 
     /**
      * Validates a method declaration line according to s-Java rules
@@ -25,25 +55,20 @@ public class MethodParser extends BaseParser {
      * @throws IllegalSjavaFileException if the declaration is invalid
      */
     public void validateMethodDeclaration(String line) throws IllegalSjavaFileException {
-        Matcher matcher = Pattern.compile(METHOD_PATTERN).matcher(line);
-        if (!matcher.matches()) {
-            throw new IllegalSjavaFileException("Invalid method declaration format");
-        }
-        String methodName = matcher.group(1);
+        String methodName = line.substring(0, line.indexOf('(')).split("\\s+")[1];
 
         // Check for method overloading (not allowed in s-Java)
-        if (methodNames.contains(methodName)) {
+        if (getMethod(methodName) != null) {
             throw new IllegalSjavaFileException("Method overloading is not allowed: " + methodName);
         }
-        methodNames.add(methodName);
 
         // Validate method name (must start with a letter)
         if (!methodName.matches("^[a-zA-Z]\\w*$")) {
             throw new IllegalSjavaFileException("Invalid method name: " + methodName);
         }
-
-        // Validate parameters if present
-        validateParameters(extractParameters(line));
+        String[] params = extractParameters(line);
+        validateParameters(params); // Validate parameters if present
+        methods.add(new Method(methodName, parseParameters(params)));
     }
 
     /**
@@ -104,17 +129,34 @@ public class MethodParser extends BaseParser {
      *
      * @param line a single line of code
      * @throws IllegalSjavaFileException if the method call isn't formatted correctly
-     * @return the method's parameters
      */
-    public String[] validateMethodCall(String line) throws IllegalSjavaFileException {
+    public void validateMethodCall(String line) throws IllegalSjavaFileException {
         // Remove trailing semicolon and whitespace
         line = line.trim();
 
         String methodName = line.substring(0, line.indexOf('('));
-        if (!methodNames.contains(methodName)) {
+        Method method = getMethod(methodName);
+        if (method == null) {
             throw new IllegalSjavaFileException("Method not found: " + methodName);
         }
 
-        return extractParameters(line);
+        String[] params = extractParameters(line);
+        int expectedLength = method.parameters().size();
+        if (params.length != expectedLength) {
+            throw new IllegalSjavaFileException(
+                    "Incompatible number of parameters: expected " + expectedLength + ", got " + params.length
+            );
+        }
+
+        for (int i = 0; i < params.length; i++) {
+            Types expectedType = method.parameters().get(i).getType();
+            Types receivedType = scopeValidator.getVariableType(params[i]);
+            if (!expectedType.equals(receivedType)) {
+                throw new IllegalSjavaFileException(
+                        "Incompatible parameter types: expected " + expectedType + ", got " + receivedType
+                );
+            }
+            scopeValidator.validateVariableInitialization(params[i]);
+        }
     }
 }
