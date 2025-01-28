@@ -1,7 +1,6 @@
 package ex5.validators;
 
 import ex5.IllegalSjavaFileException;
-import ex5.parser.LineType;
 import ex5.parser.Types;
 
 import java.util.regex.Pattern;
@@ -13,8 +12,9 @@ public class SyntaxValidator {
     private static final String INVALID_COMMENT = "/\\*|\\*/|^\\s+//";
     private static final String REQUIRED_WHITESPACE = "(?:void|final|" + Types.LEGAL_TYPES + ")(?!\\s+)\\w+";
     private static final String MISSING_REQUIRED_SPACE = "(void|final|" + Types.LEGAL_TYPES + ")(\\w+)";
-   private static final String INVALID_METHOD_DECLARATION= "\\s*(int|double|String|boolean|char)" +
-           "\\s+\\w+\\s*\\(.*";
+    private static final String INVALID_METHOD_DECLARATION = "\\s*(" + Types.LEGAL_TYPES + ")"
+                                                             + "\\s+\\w+\\s*\\(.*";
+
     /**
      * Validates general line syntax
      *
@@ -43,7 +43,10 @@ public class SyntaxValidator {
         }
 
         if (line.matches(INVALID_METHOD_DECLARATION)) {
-            throw new IllegalSjavaFileException("Invalid declaration: appears to be a method declaration with non-void return type. Only void methods are supported in s-Java");
+            throw new IllegalSjavaFileException(
+                    "Invalid declaration: appears to be a method declaration with non-void return type. " +
+                    "Only void methods are supported in s-Java"
+            );
         }
 
     }
@@ -63,44 +66,6 @@ public class SyntaxValidator {
     public void validateCommentSyntax(String line) throws IllegalSjavaFileException {
         if (!Pattern.matches(VALID_COMMENT, line)) {
             throw new IllegalSjavaFileException("Invalid comment syntax");
-        }
-    }
-
-    /**
-     * Validates that a line ends properly, according to s-Java rules
-     *
-     * @param line The line to validate
-     * @param type the line's type
-     * @throws IllegalSjavaFileException if the line ending is invalid
-     */
-    public void validateLineEnding(String line, LineType type) throws IllegalSjavaFileException {
-        line = line.trim();
-
-        switch (type) {
-            case METHOD_DECLARATION:
-            case BLOCK_START:
-                if (!line.endsWith("{")) {
-                    throw new IllegalSjavaFileException("Invalid block start line ending");
-                }
-                break;
-            case BLOCK_END:
-                if (!line.equals("}")) {
-                    throw new IllegalSjavaFileException("Invalid block end line");
-                }
-                break;
-            case METHOD_CALL:
-            case VARIABLE_DECLARATION:
-            case VARIABLE_ASSIGNMENT:
-            case RETURN_STATEMENT:
-                if (!line.trim().endsWith(";")) {
-                    throw new IllegalSjavaFileException("Missing semicolon at line end");
-                }
-                break;
-            case COMMENT:// No validation needed for comments
-            case EMPTY:
-                break; // No validation needed for these types
-            default:
-                throw new IllegalSjavaFileException("Invalid line format");
         }
     }
 

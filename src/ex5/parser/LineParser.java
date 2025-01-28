@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 /** Parser for identifying and categorizing different types of lines in s-Java code
- * uses regex patterns to determine the type of a given line */
+ * uses regex patterns to determine the type of given line */
 public class LineParser extends BaseParser {
     // Line type patterns
     private static final String METHOD_PATTERN = "^\\s*void\\s+" + IDENTIFIER + "\\s*\\([^)]*\\)\\s*\\{\\s*$";

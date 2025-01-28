@@ -1,22 +1,30 @@
 package ex5.parser;
 
 import ex5.IllegalSjavaFileException;
+import ex5.validators.ScopeValidator;
+import ex5.validators.ScopeValidator.Variable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-/** Parser for handling method declarations and bodies in s-Java
- * also checks for valid return statements and method calls */
+/**
+ * Parser for handling method declarations and bodies in s-Java
+ * also checks for valid return statements and method calls
+ */
 public class MethodParser extends BaseParser {
-    // Method declaration pattern
-    private static final String METHOD_PATTERN = "^\\s*void\\s+([a-zA-Z]\\w*)\\s*\\(\\s*(" +
-            "(?:(?:final\\s+)?(?:" + Types.LEGAL_TYPES + ")\\s+" + IDENTIFIER +
-            "(?:\\s*,\\s*(?:final\\s+)?(?:" + Types.LEGAL_TYPES + ")\\s+" + IDENTIFIER + ")*" +
-            ")?\\s*)\\)\\s*\\{\\s*$";
+    private record Method(String name, List<Variable> parameters) { }
 
-    private final List<String> methodNames = new ArrayList<>();
+    private final List<Method> methods = new ArrayList<>();
+    private final ScopeValidator scopeValidator;
+
+    /**
+     * The class main constructor
+     *
+     * @param scopeValidator A ScopeValidator instance
+     */
+    public MethodParser(ScopeValidator scopeValidator) {
+        this.scopeValidator = scopeValidator;
+    }
 
     /**
      * Validates a method declaration line according to s-Java rules
@@ -25,25 +33,144 @@ public class MethodParser extends BaseParser {
      * @throws IllegalSjavaFileException if the declaration is invalid
      */
     public void validateMethodDeclaration(String line) throws IllegalSjavaFileException {
-        Matcher matcher = Pattern.compile(METHOD_PATTERN).matcher(line);
-        if (!matcher.matches()) {
-            throw new IllegalSjavaFileException("Invalid method declaration format");
+        if (scopeValidator.isInMethod()) {
+            throw new IllegalSjavaFileException("Nested method declarations are not allowed");
         }
-        String methodName = matcher.group(1);
+
+        String methodName = getMethodName(line, LineType.METHOD_DECLARATION);
 
         // Check for method overloading (not allowed in s-Java)
-        if (methodNames.contains(methodName)) {
+        if (getMethod(methodName) != null) {
             throw new IllegalSjavaFileException("Method overloading is not allowed: " + methodName);
         }
-        methodNames.add(methodName);
 
         // Validate method name (must start with a letter)
         if (!methodName.matches("^[a-zA-Z]\\w*$")) {
             throw new IllegalSjavaFileException("Invalid method name: " + methodName);
         }
 
-        // Validate parameters if present
-        validateParameters(extractParameters(line));
+        String[] params = extractParameters(line);
+        validateParameters(params); // Validate parameters if present
+        scopeValidator.enterScope(true);
+
+        Method method = new Method(methodName, new ArrayList<>());
+        for (String param : params) {
+            method.parameters.add(parseParameter(param));
+        }
+        methods.add(method);
+    }
+
+    /**
+     * Processes return statements
+     *
+     * @param line a single line of code
+     * @throws IllegalSjavaFileException if the return statement is outside a method, or improperly formatted
+     */
+    public void processReturnStatement(String line) throws IllegalSjavaFileException {
+        if (!scopeValidator.isInMethod()) {
+            throw new IllegalSjavaFileException("Return statement outside method");
+        }
+
+        if (!line.trim().matches("^return\\s*;$")) {
+            throw new IllegalSjavaFileException("Invalid return statement format");
+        }
+    }
+
+    /**
+     * Check if the method call is valid
+     *
+     * @param line a single line of code
+     * @throws IllegalSjavaFileException if the method call isn't formatted correctly
+     */
+    public void validateMethodCall(String line) throws IllegalSjavaFileException {
+        if (!scopeValidator.isInMethod()) {
+            throw new IllegalSjavaFileException("Method call outside method body");
+        }
+
+        String methodName = getMethodName(line, LineType.METHOD_CALL);
+        Method method = getMethod(methodName);
+        if (method == null) {
+            throw new IllegalSjavaFileException("Method not found: " + methodName);
+        }
+
+        String[] params = extractParameters(line);
+        int expectedLength = method.parameters.size();
+        if (params.length != expectedLength) {
+            throw new IllegalSjavaFileException(
+                    "Incompatible number of parameters: expected " + expectedLength + ", got " + params.length
+            );
+        }
+
+        for (int i = 0; i < params.length; i++) {
+            Types expectedType = method.parameters.get(i).getType();
+            Types receivedType = scopeValidator.getVariableType(params[i]);
+            if (!expectedType.equals(receivedType)) {
+                throw new IllegalSjavaFileException(
+                        "Incompatible parameter types: expected " + expectedType + ", got " + receivedType
+                );
+            }
+            scopeValidator.validateVariableInitialization(params[i]);
+        }
+    }
+
+    //----------------------- private method -----------------------------------------
+
+    /**
+     * Searched and return a Method instance with the received name
+     *
+     * @param methodName the method's name
+     * @return the method's instance, null if such a method does not exist
+     */
+    private Method getMethod(String methodName) {
+        for (Method method : methods) {
+            if (methodName.equals(method.name)) {
+                return method;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Extracts the method's name according to the line type.
+     *
+     * @param line     a single line of code.
+     * @param lineType its type, either a method declaration or a method call
+     * @return the method's name
+     */
+    private String getMethodName(String line, LineType lineType) {
+        String start = line.substring(0, line.indexOf('(')).trim();
+        return lineType == LineType.METHOD_DECLARATION ? start.split("\\s+")[1] : start;
+    }
+
+    /**
+     * extracts the parameters from a method declaration / call
+     *
+     * @param line a method declaration / call string
+     * @return an array of parameters
+     */
+    private String[] extractParameters(String line) {
+        String params = line.substring(
+                line.indexOf('(') + 1, line.lastIndexOf(')')
+        ).trim();
+        return params.isEmpty() ? new String[0] : params.split("\\s*,\\s*");
+    }
+
+    /**
+     * Converts and declares a parameter string into a variable instance
+     *
+     * @param param the parameter as a string
+     * @return it's variable equivalent
+     * @throws IllegalSjavaFileException if the parameter's format is incorrect in any way
+     */
+    private Variable parseParameter(String param) throws IllegalSjavaFileException {
+        String[] paramParts = param.split("\\s+");
+        boolean isFinal = paramParts[0].equals("final");
+        int typeIndex = isFinal ? 1 : 0;
+
+        Types type = Types.getType(paramParts[typeIndex]);
+        String name = paramParts[typeIndex + 1];
+        scopeValidator.declareParameter(name, type, isFinal);
+        return new Variable(type, isFinal, true);
     }
 
     /**
@@ -74,47 +201,5 @@ public class MethodParser extends BaseParser {
             // Validate parameter name
             validateIdentifier(parts[typeIndex + 1]);
         }
-    }
-
-    /**
-     * Checks if a line is a valid return statement
-     *
-     * @param line The line to check
-     * @return true if it's a valid return statement
-     */
-    public boolean isValidReturnStatement(String line) {
-        return line.trim().matches("^\\s*return\\s*;\\s*$");
-    }
-
-    /**
-     * extracts the parameters from a declaration
-     *
-     * @param declaration a declaration string
-     * @return an array of parameters
-     */
-    public String[] extractParameters(String declaration) {
-        int start = declaration.indexOf('(');
-        int end = declaration.lastIndexOf(')');
-        String params = declaration.substring(start + 1, end).trim();
-        return params.isEmpty() ? new String[0] : params.split("\\s*,\\s*");
-    }
-
-    /**
-     * Check if the method call is valid
-     *
-     * @param line a single line of code
-     * @throws IllegalSjavaFileException if the method call isn't formatted correctly
-     * @return the method's parameters
-     */
-    public String[] validateMethodCall(String line) throws IllegalSjavaFileException {
-        // Remove trailing semicolon and whitespace
-        line = line.trim();
-
-        String methodName = line.substring(0, line.indexOf('('));
-        if (!methodNames.contains(methodName)) {
-            throw new IllegalSjavaFileException("Method not found: " + methodName);
-        }
-
-        return extractParameters(line);
     }
 }

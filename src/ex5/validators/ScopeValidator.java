@@ -3,7 +3,10 @@ package ex5.validators;
 import ex5.IllegalSjavaFileException;
 import ex5.parser.Types;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Manages scope and variable tracking for s-Java verification.
@@ -11,43 +14,42 @@ import java.util.*;
  */
 public class ScopeValidator {
     /** Represents a variable and its properties */
-    private static class Variable {
-        final Types type;
-        final boolean isFinal;
-        boolean isInitialized;
+    public static class Variable {
+        private final Types type;
+        private final boolean isFinal;
+        private boolean isInitialized;
 
-        Variable(Types type, boolean isFinal, boolean isInitialized) {
+        public Variable(Types type, boolean isFinal, boolean isInitialized) {
             this.type = type;
             this.isFinal = isFinal;
             this.isInitialized = isInitialized;
         }
-    }
 
-    /** Represents a single scope level */
-    private static class Scope {
-        final Map<String, Variable> variables;
-        final boolean isMethodScope;
-        final Set<String> methodParameters;
+        public Types getType() {
+            return type;
+        }
 
-        Scope(boolean isMethodScope) {
-            this.variables = new HashMap<>();
-            this.isMethodScope = isMethodScope;
-            this.methodParameters = isMethodScope ? new HashSet<>() : null;
+        public boolean isFinal() {
+            return isFinal;
+        }
+
+        public boolean isInitialized() {
+            return isInitialized;
+        }
+
+        public void setInitialized(boolean initialized) {
+            isInitialized = initialized;
         }
     }
 
-    private final Map<String, Variable> globalScope;
-    private final Deque<Scope> scopeStack;
-    private boolean inMethod;
+    /** Represents a single scope level */
+    private record Scope(boolean isMethodScope, Map<String, Variable> variables) { }
 
+    private final Scope globalScope = new Scope(false, new HashMap<>());
+    private final Deque<Scope> scopeStack = new ArrayDeque<>();
+    private boolean inMethod = false;
     private int nestingLevel = 0;
     private static final int MAX_NESTING_LEVEL = Integer.MAX_VALUE;
-
-    public ScopeValidator() {
-        this.globalScope = new HashMap<>();
-        this.scopeStack = new ArrayDeque<>();
-        this.inMethod = false;
-    }
 
     /**
      * Enters a new scope (method or block)
@@ -56,14 +58,14 @@ public class ScopeValidator {
      * @throws IllegalSjavaFileException if the maximum nesting level is exceeded
      */
     public void enterScope(boolean isMethodScope) throws IllegalSjavaFileException {
-        nestingLevel++;
-        if (nestingLevel > MAX_NESTING_LEVEL) {
-            throw new IllegalSjavaFileException("Maximum nesting level exceeded");
+        if (nestingLevel == MAX_NESTING_LEVEL) {
+            throw new IllegalSjavaFileException("Maximum nesting level reached");
         }
+        nestingLevel++;
         if (isMethodScope) {
             inMethod = true;
         }
-        scopeStack.push(new Scope(isMethodScope));
+        scopeStack.push(new Scope(isMethodScope, new HashMap<>()));
     }
 
     /**
@@ -101,11 +103,10 @@ public class ScopeValidator {
         }
 
         Scope methodScope = scopeStack.peek();
-        if (methodScope.methodParameters.contains(name)) {
+        if (methodScope.variables.containsKey(name)) {
             throw new IllegalSjavaFileException("Duplicate parameter name: " + name);
         }
 
-        methodScope.methodParameters.add(name);
         methodScope.variables.put(name, new Variable(type, isFinal, true));
     }
 
@@ -127,10 +128,10 @@ public class ScopeValidator {
             );
         }
 
-        Map<String, Variable> currentScope = scopeStack.isEmpty() ? globalScope : scopeStack.peek().variables;
+        Scope currentScope = scopeStack.isEmpty() ? globalScope : scopeStack.peek();
 
         // Check for variable redeclaration in the current scope
-        if (currentScope.containsKey(name)) {
+        if (currentScope.variables.containsKey(name)) {
             throw new IllegalSjavaFileException("Variable already declared in current scope: " + name);
         }
 
@@ -143,7 +144,7 @@ public class ScopeValidator {
         }
 
         // Add the variable to the current scope
-        currentScope.put(name, new Variable(type, isFinal, isInitialized));
+        currentScope.variables.put(name, new Variable(type, isFinal, isInitialized));
     }
 
     /**
@@ -154,10 +155,10 @@ public class ScopeValidator {
      */
     public void validateAssignment(String name) throws IllegalSjavaFileException {
         Variable var = findVariable(name);
-        if (var.isFinal && var.isInitialized) {
+        if (var.isFinal() && var.isInitialized()) {
             throw new IllegalSjavaFileException("Cannot reassign final variable: " + name);
         }
-        var.isInitialized = true;
+        var.setInitialized(true);
     }
 
     /**
@@ -169,11 +170,11 @@ public class ScopeValidator {
      *                                   or improper use of uninitialized variable
      */
     public Types getVariableType(String name) throws IllegalSjavaFileException {
-        return findVariable(name).type;
+        return findVariable(name).getType();
     }
 
     public void validateVariableInitialization(String name) throws IllegalSjavaFileException {
-        if (!findVariable(name).isInitialized) {
+        if (!findVariable(name).isInitialized()) {
             throw new IllegalSjavaFileException("Local variable " + name + " not initialized");
         }
     }
@@ -200,7 +201,8 @@ public class ScopeValidator {
      * Finds a variable in the current scope chain
      *
      * @param name the variable's name
-     * @return the variable with said name if present, null otherwise
+     * @return the variable with said name.
+     * @throws IllegalSjavaFileException if variable is not found
      */
     private Variable findVariable(String name) throws IllegalSjavaFileException {
         // Check local scopes from innermost to outermost
@@ -212,7 +214,7 @@ public class ScopeValidator {
         }
 
         // Check global scope
-        if ((var = globalScope.get(name)) == null) {
+        if ((var = globalScope.variables.get(name)) == null) {
             throw new IllegalSjavaFileException("Variable not declared: " + name);
         }
         return var;
@@ -225,12 +227,12 @@ public class ScopeValidator {
      * @return true of the variable is global
      */
     private boolean isGlobalVariable(String name) {
-        return globalScope.containsKey(name);
+        return globalScope.variables.containsKey(name);
     }
 
     /** Resets the validator state */
     public void reset() {
-        globalScope.clear();
+        globalScope.variables.clear();
         scopeStack.clear();
         inMethod = false;
         nestingLevel = 0;
