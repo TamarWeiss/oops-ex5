@@ -14,6 +14,32 @@ import java.util.regex.Pattern;
  * Coordinates different validators and ensures proper validation order.
  */
 public class ValidationManager {
+    private static final String FINAL_KEYWORD = "final";
+    private static final String COMMA_SEPARATOR = ",";
+    private static final String EQUALS_OPERATOR = "=";
+    private static final String CONDITION_REGEX = "\\((.*?)\\)";
+    private static final String LOGICAL_OPERATOR_REGEX = "\\s*(\\|\\||&&)\\s*";
+    private static final String WHITESPACE_REGEX = "\\s+";
+    private static final String COMMA_WITH_SPACES_REGEX = "\\s*,\\s*";
+    private static final String EQUALS_WITH_SPACES_REGEX = "\\s*=\\s*";
+    private static final String OR_OPERATOR = "||";
+    private static final String AND_OPERATOR = "&&";
+    private static final String TRUE_LITERAL = "true";
+    private static final String FALSE_LITERAL = "false";
+
+    // Error messages
+    private static final String ERR_INVALID_LINE = "Invalid line format";
+    private static final String ERR_FINAL_UNINITIALIZED = "Final variable must be initialized: ";
+    private static final String ERR_INVALID_ASSIGNMENT = "Invalid assignment format";
+    private static final String ERR_BLOCK_OUTSIDE_METHOD = "Block statement outside method at line:";
+    private static final String ERR_INVALID_CONDITION = "Invalid block condition format at line:";
+    private static final String ERR_MISSING_RETURN = "Missing return statement at method end";
+    private static final String ERR_INVALID_OPERATORS = "Logical operators cannot be at start or end of condition";
+    private static final String ERR_CONSECUTIVE_OPERATORS = "Cannot have consecutive operators";
+    private static final String ERR_LINE_NUMBER_FORMAT = "Line %d: %s";
+
+    private static final Pattern CONDITION_PATTERN = Pattern.compile(CONDITION_REGEX);
+
     private final LineParser lineParser;
     private final MethodParser methodParser;
     private final VariableParser variableParser;
@@ -21,9 +47,6 @@ public class ValidationManager {
     private final ScopeValidator scopeValidator;
     private final TypeValidator typeValidator;
     private boolean lastLineWasReturn;
-
-    private static final Pattern CONDITION_PATTERN = Pattern.compile("\\((.*?)\\)");
-    private static final String LOGICAL_OPERATOR = "\\s*(\\|\\||&&)\\s*";
 
     /**
      * Constructor for ValidationManager.
@@ -66,14 +89,14 @@ public class ValidationManager {
                 case BLOCK_END -> processBlockEnd();
                 case RETURN_STATEMENT -> methodParser.processReturnStatement(line);
                 case METHOD_CALL -> methodParser.validateMethodCall(line);
-                case INVALID -> throw new IllegalSjavaFileException("Invalid line format");
+                case INVALID -> throw new IllegalSjavaFileException(ERR_INVALID_LINE);
             }
 
             // Update return tracking for method validation
             lastLineWasReturn = lineType == LineType.RETURN_STATEMENT;
 
         } catch (IllegalSjavaFileException e) {
-            throw new IllegalSjavaFileException(String.format("Line %d: %s", lineNumber, e.getMessage()));
+            throw new IllegalSjavaFileException(String.format(ERR_LINE_NUMBER_FORMAT, lineNumber, e.getMessage()));
         }
     }
 
@@ -108,10 +131,10 @@ public class ValidationManager {
         line = line.trim();
 
         // Handle multiple variable declarations
-        boolean isFinal = line.startsWith("final");
-        Types type = Types.getType(line.split("\\s+")[isFinal ? 1 : 0]);
-        int start = type.toString().length() + (isFinal ? "final".length() + 1 : 0);
-        String[] declarations = line.substring(start, line.length() - 1).trim().split("\\s*,\\s*");
+        boolean isFinal = line.startsWith(FINAL_KEYWORD);
+        Types type = Types.getType(line.split(WHITESPACE_REGEX)[isFinal ? 1 : 0]);
+        int start = type.toString().length() + (isFinal ? FINAL_KEYWORD.length() + 1 : 0);
+        String[] declarations = line.substring(start, line.length() - 1).trim().split(COMMA_WITH_SPACES_REGEX);
 
         // Process each declaration
         for (String declaration : declarations) {
@@ -128,14 +151,14 @@ public class ValidationManager {
      * @throws IllegalSjavaFileException if the variable declaration is invalid
      */
     private void processSingleDeclaration(String declaration, Types type, boolean isFinal)
-    throws IllegalSjavaFileException {
-        String[] parts = declaration.split("\\s*=\\s*");
+            throws IllegalSjavaFileException {
+        String[] parts = declaration.split(EQUALS_WITH_SPACES_REGEX);
         String name = parts[0];
         boolean isInitialized = parts.length > 1;
         String value = isInitialized ? parts[1] : null;
 
         if (isFinal && !isInitialized) {
-            throw new IllegalSjavaFileException("Final variable must be initialized: " + name);
+            throw new IllegalSjavaFileException(ERR_FINAL_UNINITIALIZED + name);
         }
 
         if (isInitialized) {
@@ -153,12 +176,12 @@ public class ValidationManager {
      */
     private void processVariableAssignment(String line) throws IllegalSjavaFileException {
         line = line.trim();
-        String[] assignments = line.substring(0, line.length() - 1).split("\\s*,\\s*");
+        String[] assignments = line.substring(0, line.length() - 1).split(COMMA_WITH_SPACES_REGEX);
 
         for (String assignment : assignments) {
-            String[] parts = assignment.split("\\s*=\\s*");
+            String[] parts = assignment.split(EQUALS_WITH_SPACES_REGEX);
             if (parts.length != 2) {
-                throw new IllegalSjavaFileException("Invalid assignment format");
+                throw new IllegalSjavaFileException(ERR_INVALID_ASSIGNMENT);
             }
             String varName = parts[0];
             String value = parts[1];
@@ -195,12 +218,12 @@ public class ValidationManager {
      */
     private void processBlockStart(String line) throws IllegalSjavaFileException {
         if (!isInMethod()) {
-            throw new IllegalSjavaFileException("Block statement outside method" + " at line:" + line);
+            throw new IllegalSjavaFileException(ERR_BLOCK_OUTSIDE_METHOD + line);
         }
 
         Matcher matcher = CONDITION_PATTERN.matcher(line);
         if (!matcher.find()) {
-            throw new IllegalSjavaFileException("Invalid block condition format" + " at line:" + line);
+            throw new IllegalSjavaFileException(ERR_INVALID_CONDITION + line);
         }
 
         String condition = matcher.group(1).trim();
@@ -216,7 +239,7 @@ public class ValidationManager {
     private void processBlockEnd() throws IllegalSjavaFileException {
         boolean isMethodEnd = scopeValidator.isMethodEnd();
         if (isMethodEnd && !lastLineWasReturn) {
-            throw new IllegalSjavaFileException("Missing return statement at method end");
+            throw new IllegalSjavaFileException(ERR_MISSING_RETURN);
         }
         scopeValidator.exitScope(isMethodEnd);
     }
@@ -229,16 +252,16 @@ public class ValidationManager {
      */
     private void validateCondition(String condition) throws IllegalSjavaFileException {
         // Check for invalid operator placement at start/end
-        if (condition.startsWith("||") || condition.startsWith("&&") ||
-            condition.endsWith("||") || condition.endsWith("&&")) {
-            throw new IllegalSjavaFileException("Logical operators cannot be at start or end of condition");
+        if (condition.startsWith(OR_OPERATOR) || condition.startsWith(AND_OPERATOR) ||
+                condition.endsWith(OR_OPERATOR) || condition.endsWith(AND_OPERATOR)) {
+            throw new IllegalSjavaFileException(ERR_INVALID_OPERATORS);
         }
 
         // Split by || and &&, discarding the operators
-        String[] tokens = condition.split(LOGICAL_OPERATOR);
+        String[] tokens = condition.split(LOGICAL_OPERATOR_REGEX);
         for (String token : tokens) {
             if (token.isEmpty()) {
-                throw new IllegalSjavaFileException("Cannot have consecutive operators");
+                throw new IllegalSjavaFileException(ERR_CONSECUTIVE_OPERATORS);
             }
             validateSingleCondition(token);
         }
@@ -246,7 +269,7 @@ public class ValidationManager {
 
     private void validateSingleCondition(String condition) throws IllegalSjavaFileException {
         // Check for boolean literals
-        if (condition.equals("true") || condition.equals("false")) {
+        if (condition.equals(TRUE_LITERAL) || condition.equals(FALSE_LITERAL)) {
             return;
         }
 
