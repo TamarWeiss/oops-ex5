@@ -62,18 +62,11 @@ public class ScopeValidator {
         }
     }
 
-    private final Map<String, Variable> globalScope;
-    private final Deque<Scope> scopeStack;
-    private boolean inMethod;
-
+    private final Scope globalScope = new Scope(false);
+    private final Deque<Scope> scopeStack = new ArrayDeque<>();
+    private boolean inMethod = false;
     private int nestingLevel = 0;
     private static final int MAX_NESTING_LEVEL = Integer.MAX_VALUE;
-
-    public ScopeValidator() {
-        this.globalScope = new HashMap<>();
-        this.scopeStack = new ArrayDeque<>();
-        this.inMethod = false;
-    }
 
     /**
      * Enters a new scope (method or block)
@@ -82,10 +75,10 @@ public class ScopeValidator {
      * @throws IllegalSjavaFileException if the maximum nesting level is exceeded
      */
     public void enterScope(boolean isMethodScope) throws IllegalSjavaFileException {
-        nestingLevel++;
-        if (nestingLevel > MAX_NESTING_LEVEL) {
-            throw new IllegalSjavaFileException("Maximum nesting level exceeded");
+        if (nestingLevel == MAX_NESTING_LEVEL) {
+            throw new IllegalSjavaFileException("Maximum nesting level reached");
         }
+        nestingLevel++;
         if (isMethodScope) {
             inMethod = true;
         }
@@ -153,10 +146,10 @@ public class ScopeValidator {
             );
         }
 
-        Map<String, Variable> currentScope = scopeStack.isEmpty() ? globalScope : scopeStack.peek().variables;
+        Scope currentScope = scopeStack.isEmpty() ? globalScope : scopeStack.peek();
 
         // Check for variable redeclaration in the current scope
-        if (currentScope.containsKey(name)) {
+        if (currentScope.variables.containsKey(name)) {
             throw new IllegalSjavaFileException("Variable already declared in current scope: " + name);
         }
 
@@ -169,7 +162,7 @@ public class ScopeValidator {
         }
 
         // Add the variable to the current scope
-        currentScope.put(name, new Variable(type, isFinal, isInitialized));
+        currentScope.variables.put(name, new Variable(type, isFinal, isInitialized));
     }
 
     /**
@@ -226,7 +219,8 @@ public class ScopeValidator {
      * Finds a variable in the current scope chain
      *
      * @param name the variable's name
-     * @return the variable with said name if present, null otherwise
+     * @return the variable with said name.
+     * @throws IllegalSjavaFileException if variable is not found
      */
     private Variable findVariable(String name) throws IllegalSjavaFileException {
         // Check local scopes from innermost to outermost
@@ -238,7 +232,7 @@ public class ScopeValidator {
         }
 
         // Check global scope
-        if ((var = globalScope.get(name)) == null) {
+        if ((var = globalScope.variables.get(name)) == null) {
             throw new IllegalSjavaFileException("Variable not declared: " + name);
         }
         return var;
@@ -251,12 +245,12 @@ public class ScopeValidator {
      * @return true of the variable is global
      */
     private boolean isGlobalVariable(String name) {
-        return globalScope.containsKey(name);
+        return globalScope.variables.containsKey(name);
     }
 
     /** Resets the validator state */
     public void reset() {
-        globalScope.clear();
+        globalScope.variables.clear();
         scopeStack.clear();
         inMethod = false;
         nestingLevel = 0;
