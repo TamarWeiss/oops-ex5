@@ -13,6 +13,9 @@ public class Sjavac {
     private static final int FAILURE = 1;
     private static final int ERROR = 2;
 
+    // Error messages
+    private static final String ERROR_WRONG_ARGUMENTS = "Error: Wrong number of arguments";
+
     /**
      * Processes the input file and returns appropriate status code
      *
@@ -21,7 +24,7 @@ public class Sjavac {
      */
     private static int processFile(String[] args) {
         if (args.length != 1) {
-            System.err.println("Error: Wrong number of arguments");
+            System.err.println(ERROR_WRONG_ARGUMENTS);
             return ERROR;
         }
 

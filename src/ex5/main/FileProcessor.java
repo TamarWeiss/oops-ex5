@@ -1,5 +1,3 @@
-
-
 package ex5.main;
 
 import ex5.IOSjavaException;
@@ -15,6 +13,9 @@ import java.io.IOException;
  */
 public class FileProcessor {
     private static final String SJAVA_EXTENSION = ".sjava";
+    private static final String ERROR_INVALID_FILENAME = "File must end with " + SJAVA_EXTENSION;
+    private static final String ERROR_READING_FILE = "Failed to read file: ";
+    private static final String ERROR_UNCLOSED_METHOD_BLOCK = "Unclosed method block at end of file";
     private final String filename;
     private final ValidationManager validationManager;
     private int lineNumber;
@@ -51,11 +52,11 @@ public class FileProcessor {
 
             // Check the final state
             if (validationManager.isInMethod()) {
-                throw new IllegalSjavaFileException("Unclosed method block at end of file");
+                throw new IllegalSjavaFileException(ERROR_UNCLOSED_METHOD_BLOCK);
             }
 
         } catch (IOException e) {
-            throw new IOSjavaException("Failed to read file: " + e.getMessage());
+            throw new IOSjavaException(ERROR_READING_FILE + e.getMessage());
         }
     }
 
@@ -67,7 +68,7 @@ public class FileProcessor {
      */
     private void validateFileName(String filename) throws IOSjavaException {
         if (filename == null || !filename.endsWith(SJAVA_EXTENSION)) {
-            throw new IOSjavaException("File must end with " + SJAVA_EXTENSION);
+            throw new IOSjavaException(ERROR_INVALID_FILENAME);
         }
     }
 }
