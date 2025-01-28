@@ -7,7 +7,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** Parser for handling method declarations and bodies in s-Java */
+/** Parser for handling method declarations and bodies in s-Java
+ * also checks for valid return statements and method calls */
 public class MethodParser extends BaseParser {
     // Method declaration pattern
     private static final String METHOD_PATTERN = "^\\s*void\\s+([a-zA-Z]\\w*)\\s*\\(\\s*(" +

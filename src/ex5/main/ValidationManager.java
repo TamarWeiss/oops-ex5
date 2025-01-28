@@ -31,6 +31,10 @@ public class ValidationManager {
     // Patterns for specific validations
     private static final Pattern LOGICAL_OPERATOR = Pattern.compile("\\s*(\\|\\||&&)\\s*");
 
+    /**
+     * Constructor for ValidationManager.
+     * Initializes all parsers and validators.
+     */
     public ValidationManager() {
         this.lineParser = new LineParser();
         this.methodParser = new MethodParser();
@@ -89,7 +93,9 @@ public class ValidationManager {
         return scopeValidator.isInMethod();
     }
 
-    /** Reset all validators' state */
+    /** Reset all validators' state
+     * makes false the last line
+     * */
     public void reset() {
         lastLineWasReturn = false;
         scopeValidator.reset();
