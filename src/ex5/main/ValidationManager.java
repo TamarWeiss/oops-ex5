@@ -29,7 +29,7 @@ public class ValidationManager {
     );
 
     // Patterns for specific validations
-    private static final Pattern LOGICAL_OPERATOR = Pattern.compile("\\s*(\\|\\||&&)\\s*");
+    private static final String LOGICAL_OPERATOR = "\\s*(\\|\\||&&)\\s*";
 
     /**
      * Constructor for ValidationManager.
@@ -65,7 +65,7 @@ public class ValidationManager {
 
             // Process based on a line type
             switch (lineType) {
-                case METHOD_DECLARATION ->  methodParser.validateMethodDeclaration(line);
+                case METHOD_DECLARATION -> methodParser.validateMethodDeclaration(line);
                 case VARIABLE_DECLARATION -> processVariableDeclaration(line);
                 case VARIABLE_ASSIGNMENT -> processVariableAssignment(line);
                 case BLOCK_START -> processBlockStart(line);
@@ -111,72 +111,53 @@ public class ValidationManager {
      */
     private void processVariableDeclaration(String line) throws IllegalSjavaFileException {
         variableParser.validateDeclaration(line);
+        line = line.trim();
 
         // Handle multiple variable declarations
-        String[] declarations = line.substring(0, line.length() - 1).split(",");
-        String firstDec = declarations[0].trim();
-        boolean isFinal = firstDec.startsWith("final");
-
-        // Extract type correctly
-        String typeData = firstDec;
-        if (isFinal) {
-            typeData = firstDec.substring(5).trim();
-        }
-
-        String[] typeAndName = typeData.split("\\s+");
-        Types type = Types.getType(typeAndName[0]);
+        boolean isFinal = line.startsWith("final");
+        Types type = Types.getType(line.split("\\s+")[isFinal ? 1 : 0]);
+        int start = type.toString().length() + (isFinal ? "final".length() + 1 : 0);
+        String[] declarations = line.substring(start, line.length() - 1).trim().split("\\s*,\\s*");
 
         // Process each declaration
-        for (int i = 0; i < declarations.length; i++) {
-            String declaration = declarations[i].trim();
-            String name;
-            boolean isInitialized;
-            String value = null;
-
-            if (i == 0) {
-                // First declaration
-                name = typeAndName[1];
-                isInitialized = declaration.contains("=");
-                if (isInitialized) {
-                    value = declaration.substring(declaration.indexOf('=') + 1).trim();
-                    if (value.endsWith(";")) {
-                        value = value.substring(0, value.length() - 1).trim();
-                    }
-                }
-            }
-            else {
-                // Subsequent declarations
-                String[] parts = declaration.split("=");
-                name = parts[0].trim();
-                isInitialized = parts.length > 1;
-                if (isInitialized) {
-                    value = parts[1].trim();
-                    if (value.endsWith(";")) {
-                        value = value.substring(0, value.length() - 1).trim();
-                    }
-                }
-            }
-
-            if (isFinal && !isInitialized) {
-                throw new IllegalSjavaFileException("Final variable must be initialized: " + name);
-            }
-
-            if (isInitialized) {
-                try {
-                    // Try to validate as identifier first
-                    variableParser.validateIdentifier(value);  // use existing value variable
-                    // If it's a valid identifier, check type compatibility
-                    Types valueType = scopeValidator.getVariableType(value);
-                    scopeValidator.validateVariableInitialization(value);
-                    typeValidator.validateTypeCompatibility(type, valueType);
-                } catch (IllegalSjavaFileException e) {
-                    // Not a valid identifier, try as literal
-                    typeValidator.validateLiteralType(type, value);
-                }
-            }
-
-            scopeValidator.declareVariable(name, type, isFinal, isInitialized);
+        for (String declaration : declarations) {
+            processSingleDeclaration(declaration, type, isFinal);
         }
+    }
+
+    /**
+     * Processes a single variable declaration
+     *
+     * @param declaration the variable declaration
+     * @param type        the variable's type
+     * @param isFinal     if the variable is final
+     * @throws IllegalSjavaFileException if the variable declaration is invalid
+     */
+    private void processSingleDeclaration(String declaration, Types type, boolean isFinal)
+    throws IllegalSjavaFileException {
+        String[] parts = declaration.split("\\s*=\\s*");
+        String name = parts[0];
+        boolean isInitialized = parts.length > 1;
+        String value = isInitialized ? parts[1] : null;
+
+        if (isFinal && !isInitialized) {
+            throw new IllegalSjavaFileException("Final variable must be initialized: " + name);
+        }
+
+        if (isInitialized) {
+            try {
+                // Try to validate as identifier first
+                variableParser.validateIdentifier(value);  // use existing value variable
+                // If it's a valid identifier, check type compatibility
+                Types valueType = scopeValidator.getVariableType(value);
+                scopeValidator.validateVariableInitialization(value);
+                typeValidator.validateTypeCompatibility(type, valueType);
+            } catch (IllegalSjavaFileException e) {
+                typeValidator.validateLiteralType(type, value); // Not a valid identifier, try as literal
+            }
+        }
+
+        scopeValidator.declareVariable(name, type, isFinal, isInitialized);
     }
 
     /**
@@ -259,9 +240,6 @@ public class ValidationManager {
      * @throws IllegalSjavaFileException if the condition isn't formatted properly
      */
     private void validateCondition(String condition) throws IllegalSjavaFileException {
-        // Remove leading/trailing whitespace
-        condition = condition.trim();
-
         // Check for invalid operator placement at start/end
         if (condition.startsWith("||") || condition.startsWith("&&") ||
             condition.endsWith("||") || condition.endsWith("&&")) {
@@ -269,10 +247,8 @@ public class ValidationManager {
         }
 
         // Split by || and &&, discarding the operators
-        String[] tokens = condition.split("\\|\\||&&");
-
-        for (String s : tokens) {
-            String token = s.trim();
+        String[] tokens = condition.split(LOGICAL_OPERATOR);
+        for (String token : tokens) {
             if (token.isEmpty()) {
                 throw new IllegalSjavaFileException("Cannot have consecutive operators");
             }

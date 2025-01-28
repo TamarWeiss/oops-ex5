@@ -87,9 +87,6 @@ public class MethodParser extends BaseParser {
             throw new IllegalSjavaFileException("Method call outside method body");
         }
 
-        // Remove trailing semicolon and whitespace
-        line = line.trim();
-
         String methodName = getMethodName(line, LineType.METHOD_CALL);
         Method method = getMethod(methodName);
         if (method == null) {
