@@ -139,16 +139,7 @@ public class ValidationManager {
         }
 
         if (isInitialized) {
-            try {
-                // Try to validate as identifier first
-                variableParser.validateIdentifier(value);  // use existing value variable
-                // If it's a valid identifier, check type compatibility
-                Types valueType = scopeValidator.getVariableType(value);
-                scopeValidator.validateVariableInitialization(value);
-                typeValidator.validateTypeCompatibility(type, valueType);
-            } catch (IllegalSjavaFileException e) {
-                typeValidator.validateLiteralType(type, value); // Not a valid identifier, try as literal
-            }
+            validateVariableValue(value, type);
         }
 
         scopeValidator.declareVariable(name, type, isFinal, isInitialized);
@@ -173,19 +164,26 @@ public class ValidationManager {
             String value = parts[1];
             Types varType = scopeValidator.getVariableType(varName);
 
-            try {
-                // Try to validate as identifier first
-                variableParser.validateIdentifier(value);
-                // If it's a valid identifier, check type compatibility
-                Types valueType = scopeValidator.getVariableType(value);
-                scopeValidator.validateVariableInitialization(value);
-                typeValidator.validateTypeCompatibility(varType, valueType);
-            } catch (IllegalSjavaFileException e) {
-                // Not a valid identifier, try as literal
-                typeValidator.validateLiteralType(varType, value);
-            }
-
+            validateVariableValue(value, varType);
             scopeValidator.validateAssignment(varName);
+        }
+    }
+
+    /**
+     * Checks if a given variable's value is valid
+     * @param value the variable's value
+     * @param type the variable's type
+     * @throws IllegalSjavaFileException if the value is incompatible with the given variable
+     */
+    private void validateVariableValue(String value, Types type) throws IllegalSjavaFileException {
+        try {
+            // Try to validate as identifier first
+            variableParser.validateIdentifier(value);
+            scopeValidator.validateVariableInitialization(value);
+            // If it's a valid identifier, check type compatibility
+            typeValidator.validateTypeCompatibility(type, scopeValidator.getVariableType(value));
+        } catch (IllegalSjavaFileException e) {
+            typeValidator.validateLiteralType(type, value); // Not a valid identifier, try as literal
         }
     }
 
