@@ -44,6 +44,18 @@ public class ValidationManager {
     private final TypeValidator typeValidator = new TypeValidator();
     private boolean lastLineWasReturn = false;
 
+    public void declareMethods(String line, int lineNumber) {
+        try {
+            if (lineParser.getLineType(line) == LineType.METHOD_DECLARATION) {
+                methodParser.declareMethod(line);
+            }
+        } catch (IllegalSjavaFileException e) {
+            throw new IllegalSjavaFileException(
+                    String.format(ERR_LINE_NUMBER_FORMAT, lineNumber, e.getMessage())
+            );
+        }
+    }
+
     /**
      * Validates a single line of code through the complete validation chain
      *

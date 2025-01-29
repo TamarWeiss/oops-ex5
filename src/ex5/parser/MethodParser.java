@@ -2,7 +2,7 @@ package ex5.parser;
 
 import ex5.IllegalSjavaFileException;
 import ex5.validators.ScopeValidator;
-import ex5.validators.ScopeValidator.Variable;
+import ex5.validators.Variable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,19 +63,38 @@ public class MethodParser extends BaseParser {
 
         String methodName = getMethodName(line, LineType.METHOD_DECLARATION);
 
-        // Check for method overloading (not allowed in s-Java)
-        if (getMethod(methodName) != null) {
-            throw new IllegalSjavaFileException(ERR_METHOD_OVERLOAD + methodName);
-        }
-
         // Validate method name (must start with a letter)
         if (!methodName.matches(METHOD_NAME_REGEX)) {
             throw new IllegalSjavaFileException(ERR_INVALID_METHOD_NAME + methodName);
         }
 
+        Method method = getMethod(methodName);
+        if (method == null) {
+            throw new IllegalSjavaFileException(ERR_METHOD_NOT_FOUND + methodName);
+        }
+
+        scopeValidator.enterScope(true);
+        for (var param : method.parameters) {
+            scopeValidator.declareParameter(param.getName(), param.getType(), param.isFinal());
+        }
+    }
+
+    /**
+     * declares a method, and saves it for later use
+     *
+     * @param line the declaration line
+     * @throws IllegalSjavaFileException if the declaration isn't formatted properly
+     */
+    public void declareMethod(String line) throws IllegalSjavaFileException {
+        String methodName = getMethodName(line, LineType.METHOD_DECLARATION);
+
+        // Check for method overloading (not allowed in s-Java)
+        if (getMethod(methodName) != null) {
+            throw new IllegalSjavaFileException(ERR_METHOD_OVERLOAD + methodName);
+        }
+
         String[] params = extractParameters(line);
         validateParameters(params); // Validate parameters if present
-        scopeValidator.enterScope(true);
 
         Method method = new Method(methodName, new ArrayList<>());
         for (String param : params) {
@@ -171,7 +190,7 @@ public class MethodParser extends BaseParser {
     }
 
     /**
-     * Converts and declares a parameter string into a variable instance
+     * Converts parameter string into a variable instance
      *
      * @param param the parameter as a string
      * @return it's variable equivalent
@@ -184,8 +203,7 @@ public class MethodParser extends BaseParser {
 
         Types type = Types.getType(paramParts[typeIndex]);
         String name = paramParts[typeIndex + 1];
-        scopeValidator.declareParameter(name, type, isFinal);
-        return new Variable(type, isFinal, true);
+        return new Variable(name, type, isFinal, true);
     }
 
     /**

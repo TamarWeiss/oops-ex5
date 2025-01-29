@@ -33,62 +33,6 @@ public class ScopeValidator {
     private static final int INITIAL_NESTING_LEVEL = 0;
     private static final int MAX_NESTING_LEVEL = Integer.MAX_VALUE;
 
-    /** Represents a variable and its properties */
-    public static class Variable {
-        private final Types type;
-        private final boolean isFinal;
-        private boolean isInitialized;
-
-        /**
-         * Creates a new variable
-         *
-         * @param type         the variable's type
-         * @param isFinal      if the variable is final
-         * @param isInitialized if the variable is initialized
-         */
-        public Variable(Types type, boolean isFinal, boolean isInitialized) {
-            this.type = type;
-            this.isFinal = isFinal;
-            this.isInitialized = isInitialized;
-        }
-
-        /**
-         * Gets the variable's type
-         *
-         * @return the variable's type
-         */
-        public Types getType() {
-            return type;
-        }
-
-        /**
-         * Checks if the variable is final
-         *
-         * @return true if the variable is final
-         */
-        public boolean isFinal() {
-            return isFinal;
-        }
-
-        /**
-         * Checks if the variable is initialized
-         *
-         * @return true if the variable is initialized
-         */
-        public boolean isInitialized() {
-            return isInitialized;
-        }
-
-        /**
-         * Sets the variable's initialization status
-         *
-         * @param initialized true if the variable is initialized
-         */
-        public void setInitialized(boolean initialized) {
-            isInitialized = initialized;
-        }
-    }
-
     /** Represents a single scope level */
     private record Scope(boolean isMethodScope, Map<String, Variable> variables) { }
 
@@ -153,7 +97,7 @@ public class ScopeValidator {
             throw new IllegalSjavaFileException(ERR_DUPLICATE_PARAM + name);
         }
 
-        methodScope.variables.put(name, new Variable(type, isFinal, true));
+        methodScope.variables.put(name, new Variable(name, type, isFinal, true));
     }
 
     /**
@@ -188,7 +132,7 @@ public class ScopeValidator {
         }
 
         // Add the variable to the current scope
-        currentScope.variables.put(name, new Variable(type, isFinal, isInitialized));
+        currentScope.variables.put(name, new Variable(name, type, isFinal, isInitialized));
     }
 
     /**
