@@ -2,8 +2,6 @@ package ex5.parser;
 
 import ex5.IllegalSjavaFileException;
 
-import java.util.Arrays;
-
 /** Represents valid primitive types in s-Java */
 public enum Types {
     /** int type */
@@ -17,10 +15,6 @@ public enum Types {
     /** char type */
     CHAR("char");
 
-    /** A string containing all legal types in s-Java */
-    public static final String LEGAL_TYPES = String.join(
-            "|", Arrays.stream(Types.values()).map(Types::toString).toList()
-    );
     private static final String UNKNOWN_TYPE_ERR = "Unknown type: ";
     private final String type;
 

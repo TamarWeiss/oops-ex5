@@ -13,7 +13,7 @@ public class LineParser extends BaseParser {
     // Line type patterns
     private static final String METHOD_PATTERN = "^\\s*+" + VOID + WHITESPACE + IDENTIFIER
                                                  + "\\s*\\([^)]*\\)" + "\\s*\\{\\s*$";
-    private static final String VARIABLE_PATTERN = "^\\s*(" + FINAL + WHITESPACE + ")?(" + Types.LEGAL_TYPES
+    private static final String VARIABLE_PATTERN = "^\\s*(" + FINAL + WHITESPACE + ")?(" + LEGAL_TYPES
                                                    + ")" + WHITESPACE + ".*";
     private static final String COMMENT_PATTERN = "^\\s*//.*";
     private static final String EMPTY_LINE_PATTERN = "^\\s*$";

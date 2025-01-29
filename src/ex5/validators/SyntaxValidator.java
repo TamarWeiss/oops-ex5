@@ -1,7 +1,6 @@
 package ex5.validators;
 
 import ex5.IllegalSjavaFileException;
-import ex5.parser.Types;
 
 import java.util.regex.Pattern;
 
@@ -15,13 +14,14 @@ public class SyntaxValidator {
     private static final String MULTI_LINE_END = "*/";
 
     // Whitespace validation patterns
-    private static final String PATTERN_TYPE_GROUP = "(" + VOID + "|" + FINAL + "|" + Types.LEGAL_TYPES + ")";
+    private static final String PATTERN_TYPE_GROUP = "(" + VOID + "|" + FINAL + "|" + LEGAL_TYPES + ")";
     private static final String PATTERN_NO_SPACE = "(?!" + WHITESPACE + ")";
     private static final String PATTERN_WORD = "\\w+";
-    private static final String PATTERN_REQUIRED_WHITESPACE = PATTERN_TYPE_GROUP + PATTERN_NO_SPACE + PATTERN_WORD;
+    private static final String PATTERN_REQUIRED_WHITESPACE = PATTERN_TYPE_GROUP + PATTERN_NO_SPACE
+                                                              + PATTERN_WORD;
 
     // Method declaration pattern components
-    private static final String PATTERN_TYPE = "(" + Types.LEGAL_TYPES + ")";
+    private static final String PATTERN_TYPE = "(" + LEGAL_TYPES + ")";
     private static final String PATTERN_METHOD_PARAMS = "\\s*\\(.*";
     private static final String PATTERN_INVALID_METHOD = "\\s*" + PATTERN_TYPE + WHITESPACE + PATTERN_WORD
                                                          + PATTERN_METHOD_PARAMS;

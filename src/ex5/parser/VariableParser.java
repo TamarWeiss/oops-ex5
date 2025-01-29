@@ -9,7 +9,7 @@ import static ex5.Constants.*;
 /** Parser for handling variable declarations and assignments in s-Java */
 public class VariableParser extends BaseParser {
     private static final String DECLARATION_PATTERN =
-            "^\\s*(" + FINAL + WHITESPACE + ")?(" + Types.LEGAL_TYPES + ")" + WHITESPACE +
+            "^\\s*(" + FINAL + WHITESPACE + ")?(" + LEGAL_TYPES + ")" + WHITESPACE +
             "(" + IDENTIFIER + "(?:" + EQUALS + "[^,;]+)?" + "(?:" + COMMA + IDENTIFIER +
             "(?:" + EQUALS + "[^,;]+)?)*)" + SEMICOLON + "$";
     private static final String DOUBLE_UNDERSCORE_PATTERN = ".*\\b__\\w+.*";

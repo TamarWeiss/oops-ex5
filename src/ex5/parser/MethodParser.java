@@ -34,7 +34,6 @@ public class MethodParser extends BaseParser {
     private static final String ERR_PARAM_MODIFIER = "Invalid parameter modifier: ";
     private static final String GOT = ", got ";
 
-
     private record Method(String name, List<Variable> parameters) { }
 
     private final List<Method> methods = new ArrayList<>();

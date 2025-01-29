@@ -17,8 +17,7 @@ public class FileProcessor {
     private static final String ERROR_READING_FILE = "Failed to read file: ";
     private static final String ERROR_UNCLOSED_METHOD_BLOCK = "Unclosed method block at end of file";
     private final String filename;
-    private final ValidationManager validationManager;
-    private int lineNumber;
+    private final ValidationManager validationManager = new ValidationManager();
 
     /**
      * Constructor for FileProcessor
@@ -29,8 +28,6 @@ public class FileProcessor {
     public FileProcessor(String filename) throws IOSjavaException {
         validateFileName(filename);
         this.filename = filename;
-        this.validationManager = new ValidationManager();
-        this.lineNumber = 0;
     }
 
     /**
@@ -42,7 +39,7 @@ public class FileProcessor {
     public void processFile() throws IOSjavaException, IllegalSjavaFileException {
         try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
             String line;
-            lineNumber = 0;
+            int lineNumber = 0;
             validationManager.reset();  // Reset validation state
 
             while ((line = reader.readLine()) != null) {

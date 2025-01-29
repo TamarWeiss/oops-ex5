@@ -20,6 +20,7 @@ public class ValidationManager {
     private static final String LOGICAL_OPERATOR_REGEX = "\\s*(\\|\\||&&)\\s*";
     private static final String OR = "||";
     private static final String AND = "&&";
+    private static final Pattern CONDITION_PATTERN = Pattern.compile(CONDITION_REGEX);
 
     // Error messages
     private static final String ERR_INVALID_LINE = "Invalid line format";
@@ -33,29 +34,13 @@ public class ValidationManager {
     private static final String ERR_CONSECUTIVE_OPERATORS = "Cannot have consecutive operators";
     private static final String ERR_LINE_NUMBER_FORMAT = "Line %d: %s";
 
-    private static final Pattern CONDITION_PATTERN = Pattern.compile(CONDITION_REGEX);
-
-    private final LineParser lineParser;
-    private final MethodParser methodParser;
-    private final VariableParser variableParser;
-    private final SyntaxValidator syntaxValidator;
-    private final ScopeValidator scopeValidator;
-    private final TypeValidator typeValidator;
-    private boolean lastLineWasReturn;
-
-    /**
-     * Constructor for ValidationManager.
-     * Initializes all parsers and validators.
-     */
-    public ValidationManager() {
-        this.lineParser = new LineParser();
-        this.scopeValidator = new ScopeValidator();
-        this.methodParser = new MethodParser(scopeValidator);
-        this.variableParser = new VariableParser();
-        this.syntaxValidator = new SyntaxValidator();
-        this.typeValidator = new TypeValidator();
-        this.lastLineWasReturn = false;
-    }
+    private final LineParser lineParser = new LineParser();
+    private final ScopeValidator scopeValidator = new ScopeValidator();
+    private final MethodParser methodParser = new MethodParser(this.scopeValidator);
+    private final VariableParser variableParser = new VariableParser();
+    private final SyntaxValidator syntaxValidator = new SyntaxValidator();
+    private final TypeValidator typeValidator = new TypeValidator();
+    private boolean lastLineWasReturn = false;
 
     /**
      * Validates a single line of code through the complete validation chain
@@ -152,14 +137,13 @@ public class ValidationManager {
         String[] parts = declaration.split(EQUALS);
         String name = parts[0];
         boolean isInitialized = parts.length > 1;
-        String value = isInitialized ? parts[1] : null;
 
         if (isFinal && !isInitialized) {
             throw new IllegalSjavaFileException(ERR_UNINITIALIZED_FINAL + name);
         }
 
         if (isInitialized) {
-            validateVariableValue(value, type);
+            validateVariableValue(parts[1], type);
         }
 
         scopeValidator.declareVariable(name, type, isFinal, isInitialized);
@@ -181,10 +165,7 @@ public class ValidationManager {
                 throw new IllegalSjavaFileException(ERR_INVALID_ASSIGNMENT);
             }
             String varName = parts[0];
-            String value = parts[1];
-            Types varType = scopeValidator.getVariableType(varName);
-
-            validateVariableValue(value, varType);
+            validateVariableValue(parts[1], scopeValidator.getVariableType(varName));
             scopeValidator.validateAssignment(varName);
         }
     }
@@ -224,8 +205,7 @@ public class ValidationManager {
             throw new IllegalSjavaFileException(ERR_INVALID_CONDITION + line);
         }
 
-        String condition = matcher.group(1).trim();
-        validateCondition(condition);
+        validateCondition(matcher.group(1).trim());
         scopeValidator.enterScope(false);
     }
 
@@ -273,10 +253,9 @@ public class ValidationManager {
         // Check for numeric literal
         try {
             Double.parseDouble(condition);
-        } catch (NumberFormatException ignored) {
+        } catch (NumberFormatException e) {
             // Must be a variable - validate it exists and has a compatible type
-            Types type = scopeValidator.getVariableType(condition);
-            typeValidator.validateConditionType(type);
+            typeValidator.validateConditionType(scopeValidator.getVariableType(condition));
             scopeValidator.validateVariableInitialization(condition);
         }
     }
