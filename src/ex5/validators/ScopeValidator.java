@@ -88,11 +88,12 @@ public class ScopeValidator {
      * @throws IllegalSjavaFileException invalid parameter declaration
      */
     public void declareParameter(String name, Types type, boolean isFinal) throws IllegalSjavaFileException {
-        if (scopeStack.isEmpty() || !scopeStack.peek().isMethodScope) {
+        Scope methodScope = getCurrentScope();
+
+        if (!isMethodEnd()) {
             throw new IllegalSjavaFileException(ERR_PARAM_OUTSIDE);
         }
 
-        Scope methodScope = scopeStack.peek();
         if (methodScope.variables.containsKey(name)) {
             throw new IllegalSjavaFileException(ERR_DUPLICATE_PARAM + name);
         }
@@ -116,7 +117,7 @@ public class ScopeValidator {
             throw new IllegalSjavaFileException(ERR_DOUBLE_UNDERSCORE + name);
         }
 
-        Scope currentScope = scopeStack.isEmpty() ? globalScope : scopeStack.peek();
+        Scope currentScope = getCurrentScope();
 
         // Check for variable redeclaration in the current scope
         if (currentScope.variables.containsKey(name)) {
@@ -146,7 +147,14 @@ public class ScopeValidator {
         if (var.isFinal() && var.isInitialized()) {
             throw new IllegalSjavaFileException(ERR_FINAL_REASSIGN + name);
         }
-        var.setInitialized(true);
+
+        if (isGlobalVariable(name) && getCurrentScope() != globalScope) {
+            //declare an identical variable in the current scope, instead of overriding the global one
+            declareVariable(name, var.getType(), var.isFinal(), true);
+        }
+        else {
+            var.setInitialized(true);
+        }
     }
 
     /**
@@ -187,7 +195,27 @@ public class ScopeValidator {
      * @return true if we reached the method's end
      */
     public boolean isMethodEnd() {
-        return !scopeStack.isEmpty() && scopeStack.peek().isMethodScope;
+        Scope currentScope = getCurrentScope();
+        return currentScope != globalScope && currentScope.isMethodScope;
+    }
+
+    /** Resets the validator state */
+    public void reset() {
+        globalScope.variables.clear();
+        scopeStack.clear();
+        inMethod = false;
+        nestingLevel = INITIAL_NESTING_LEVEL;
+    }
+
+    //---------------------------------------private methods------------------------------------------------
+
+    /**
+     * Fetches the current scope
+     *
+     * @return the current scope
+     */
+    private Scope getCurrentScope() {
+        return scopeStack.isEmpty() ? globalScope : scopeStack.peek();
     }
 
     /**
@@ -221,13 +249,5 @@ public class ScopeValidator {
      */
     private boolean isGlobalVariable(String name) {
         return globalScope.variables.containsKey(name);
-    }
-
-    /** Resets the validator state */
-    public void reset() {
-        globalScope.variables.clear();
-        scopeStack.clear();
-        inMethod = false;
-        nestingLevel = INITIAL_NESTING_LEVEL;
     }
 }
