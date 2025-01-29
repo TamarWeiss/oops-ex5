@@ -8,6 +8,7 @@ public class Variable {
     private final Types type;
     private final boolean isFinal;
     private boolean isInitialized;
+    private boolean initializedInGlobalScope;
 
     /**
      * Creates a new variable
@@ -22,6 +23,7 @@ public class Variable {
         this.type = type;
         this.isFinal = isFinal;
         this.isInitialized = isInitialized;
+        this.initializedInGlobalScope = false;
     }
 
     /**
@@ -59,6 +61,22 @@ public class Variable {
      */
     public void setInitialized(boolean initialized) {
         isInitialized = initialized;
+    }
+
+    /**
+     * @return if the variable was initialized in the global scope
+     */
+    public boolean isInitializedInGlobalScope() {
+        return initializedInGlobalScope;
+    }
+
+    /**
+     * Sets the variable's initialization status in the global scope
+     *
+     * @param initializedInGlobalScope the new initialization status
+     */
+    public void setInitializedInGlobalScope(boolean initializedInGlobalScope) {
+        this.initializedInGlobalScope = initializedInGlobalScope;
     }
 
 }
