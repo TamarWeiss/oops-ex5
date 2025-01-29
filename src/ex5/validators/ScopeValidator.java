@@ -88,17 +88,16 @@ public class ScopeValidator {
      * @throws IllegalSjavaFileException invalid parameter declaration
      */
     public void declareParameter(String name, Types type, boolean isFinal) throws IllegalSjavaFileException {
-        Scope methodScope = getCurrentScope();
+        Scope currentScope = getCurrentScope();
 
         if (!isMethodEnd()) {
             throw new IllegalSjavaFileException(ERR_PARAM_OUTSIDE);
         }
-
-        if (methodScope.variables.containsKey(name)) {
+        if (currentScope.variables.containsKey(name)) {
             throw new IllegalSjavaFileException(ERR_DUPLICATE_PARAM + name);
         }
 
-        methodScope.variables.put(name, new Variable(name, type, isFinal, true));
+        currentScope.variables.put(name, new Variable(name, type, isFinal, true));
     }
 
     /**
@@ -111,7 +110,7 @@ public class ScopeValidator {
      * @throws IllegalSjavaFileException for invalid variable declaration
      */
     public void declareVariable(String name, Types type, boolean isFinal, boolean isInitialized)
-            throws IllegalSjavaFileException {
+    throws IllegalSjavaFileException {
         if (name.startsWith(DOUBLE_UNDERSCORE_PREFIX)) {
             throw new IllegalSjavaFileException(ERR_DOUBLE_UNDERSCORE + name);
         }
@@ -129,11 +128,7 @@ public class ScopeValidator {
             } catch (IllegalSjavaFileException ignored) { } //no global conflict found, continue
         }
 
-        Variable newVar = new Variable(name, type, isFinal, isInitialized);
-        if (!inMethod) {  // If in global scope
-            newVar.setInitializedInGlobalScope(isInitialized);
-        }
-        currentScope.variables.put(name, newVar);
+        currentScope.variables.put(name, new Variable(name, type, isFinal, isInitialized));
     }
 
     /**
@@ -146,10 +141,6 @@ public class ScopeValidator {
         Variable var = findVariable(name);
         if (var.isFinal() && var.isInitialized()) {
             throw new IllegalSjavaFileException(ERR_FINAL_REASSIGN + name);
-        }
-        var.setInitialized(true);
-        if (!inMethod && isGlobalVariable(name)) {
-            var.setInitializedInGlobalScope(true);
         }
 
         if (isGlobalVariable(name) && getCurrentScope() != globalScope) {
@@ -180,16 +171,8 @@ public class ScopeValidator {
      */
     public void validateVariableInitialization(String name) throws IllegalSjavaFileException {
         Variable var = findVariable(name);
-        if (!inMethod) {  // If we're in global scope
-            if (!var.isInitialized()) {
-                throw new IllegalSjavaFileException(String.format(ERR_VAR_NOT_INIT, name));
-            }
-        } else {  // If we're in a method
-            if (isGlobalVariable(name) && !var.isInitializedInGlobalScope()) {
-                throw new IllegalSjavaFileException(String.format(ERR_VAR_NOT_INIT, name));
-            } else if (!var.isInitialized()) {
-                throw new IllegalSjavaFileException(String.format(ERR_VAR_NOT_INIT, name));
-            }
+        if (!var.isInitialized()) {
+            throw new IllegalSjavaFileException(String.format(ERR_VAR_NOT_INIT, name));
         }
     }
 
@@ -255,12 +238,32 @@ public class ScopeValidator {
     }
 
     /**
-     * Checks if a variable is in the global scope
+     * Fetches the innermost scope in which the variable is declared
      *
      * @param name the variable's name
-     * @return true of the variable is global
+     * @return the variable's scope, or null if the variable isn't declared
+     */
+    private Scope getVariableScope(String name) {
+        for (Scope scope : scopeStack) {
+            if (scope.variables.get(name) != null) {
+                return scope;
+            }
+        }
+
+        if (globalScope.variables.get(name) != null) {
+            return globalScope;
+        }
+        return null;
+    }
+
+    /**
+     * Checks if a variable is in the global scope,
+     * and there aren't any other variables overriding it
+     *
+     * @param name the variable's name
+     * @return true if the variable is global
      */
     private boolean isGlobalVariable(String name) {
-        return globalScope.variables.containsKey(name);
+        return getVariableScope(name) == globalScope;
     }
 }
