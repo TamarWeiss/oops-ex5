@@ -85,12 +85,12 @@ public class MethodParser extends BaseParser {
     }
 
     /**
-     * Processes return statements
+     * Validates return statements
      *
      * @param line a single line of code
      * @throws IllegalSjavaFileException if the return statement is outside a method, or improperly formatted
      */
-    public void processReturnStatement(String line) throws IllegalSjavaFileException {
+    public void validatesReturnStatement(String line) throws IllegalSjavaFileException {
         if (!scopeValidator.isInMethod()) {
             throw new IllegalSjavaFileException(ERR_RETURN_OUTSIDE);
         }
@@ -124,8 +124,7 @@ public class MethodParser extends BaseParser {
         }
 
         for (int i = 0; i < params.length; i++) {
-            Types expectedType = method.parameters.get(i).getType();
-            validateValueCallback.accept(params[i], expectedType);
+            validateValueCallback.accept(params[i], method.parameters.get(i).getType());
         }
     }
 

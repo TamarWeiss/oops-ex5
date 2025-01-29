@@ -69,7 +69,7 @@ public class ValidationManager {
                 case VARIABLE_ASSIGNMENT -> processVariableAssignment(line);
                 case BLOCK_START -> processBlockStart(line);
                 case BLOCK_END -> processBlockEnd();
-                case RETURN_STATEMENT -> methodParser.processReturnStatement(line);
+                case RETURN_STATEMENT -> methodParser.validatesReturnStatement(line);
                 case METHOD_CALL -> methodParser.validateMethodCall(line);
                 case INVALID -> throw new IllegalSjavaFileException(ERR_INVALID_LINE);
             }
@@ -180,15 +180,18 @@ public class ValidationManager {
      * @throws IllegalSjavaFileException if the value is incompatible with the given variable
      */
     public void validateVariableValue(String value, Types type) throws IllegalSjavaFileException {
+        Types valueType;
         try {
-            // Try to validate as identifier first
             variableParser.validateIdentifier(value);
-            scopeValidator.validateVariableInitialization(value);
-            // If it's a valid identifier, check type compatibility
-            typeValidator.validateTypeCompatibility(type, scopeValidator.getVariableType(value));
+            valueType = scopeValidator.getVariableType(value);
         } catch (IllegalSjavaFileException e) {
-            typeValidator.validateLiteralType(type, value); // Not a valid identifier, try as literal
+            typeValidator.validateLiteralType(type, value); //variable not found, try literal type instead
+            return;
         }
+
+        // If it's a valid identifier, check type compatibility
+        typeValidator.validateTypeCompatibility(type, valueType);
+        scopeValidator.validateVariableInitialization(value);
     }
 
     /**

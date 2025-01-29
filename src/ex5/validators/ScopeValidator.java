@@ -206,12 +206,11 @@ public class ScopeValidator {
     }
 
     /**
-     * Validates variable access and returns its type
+     * Finds and returns a variable's type
      *
      * @param name the variable's name
      * @return the variable's type
-     * @throws IllegalSjavaFileException if said variable is not declared prior,
-     *                                   or improper use of uninitialized variable
+     * @throws IllegalSjavaFileException if said variable is not declared prior
      */
     public Types getVariableType(String name) throws IllegalSjavaFileException {
         return findVariable(name).getType();
