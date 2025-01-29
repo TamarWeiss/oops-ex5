@@ -66,8 +66,8 @@ public class ValidationManager {
      */
     public void validateLine(String line, int lineNumber) throws IllegalSjavaFileException {
         LineType lineType = lineParser.getLineType(line);
-        // Skip empty lines and comments early
-        if (lineType == LineType.EMPTY || lineType == LineType.COMMENT) {
+        // Skip empty lines early
+        if (lineType == LineType.EMPTY) {
             return;
         }
 
