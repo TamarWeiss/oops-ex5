@@ -44,6 +44,12 @@ public class ValidationManager {
     private final TypeValidator typeValidator = new TypeValidator();
     private boolean lastLineWasReturn = false;
 
+    /**
+     * Declares methods in the code
+     *
+     * @param line       the line of code
+     * @param lineNumber the line's number
+     */
     public void declareMethods(String line, int lineNumber) {
         try {
             if (lineParser.getLineType(line) == LineType.METHOD_DECLARATION) {

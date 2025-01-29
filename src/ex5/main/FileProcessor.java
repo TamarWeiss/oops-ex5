@@ -16,6 +16,7 @@ public class FileProcessor {
     private static final String ERROR_INVALID_FILENAME = "File must end with " + SJAVA_EXTENSION;
     private static final String ERROR_READING_FILE = "Failed to read file: ";
     private static final String ERROR_UNCLOSED_METHOD_BLOCK = "Unclosed method block at end of file";
+    /** Buffer size for file reading */
     public static final int BUFFER = 10000;
     private final String filename;
     private final ValidationManager validationManager = new ValidationManager();

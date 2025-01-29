@@ -111,20 +111,17 @@ public class ScopeValidator {
      * @throws IllegalSjavaFileException for invalid variable declaration
      */
     public void declareVariable(String name, Types type, boolean isFinal, boolean isInitialized)
-    throws IllegalSjavaFileException {
-        // Validate variable name doesn't start with double underscore
+            throws IllegalSjavaFileException {
         if (name.startsWith(DOUBLE_UNDERSCORE_PREFIX)) {
             throw new IllegalSjavaFileException(ERR_DOUBLE_UNDERSCORE + name);
         }
 
         Scope currentScope = getCurrentScope();
 
-        // Check for variable redeclaration in the current scope
         if (currentScope.variables.containsKey(name)) {
             throw new IllegalSjavaFileException(ERR_VAR_REDECLARED + name);
         }
 
-        // For global variables, ensure no other global has the same name
         if (currentScope == globalScope) {
             try {
                 findVariable(name);
@@ -132,8 +129,11 @@ public class ScopeValidator {
             } catch (IllegalSjavaFileException ignored) { } //no global conflict found, continue
         }
 
-        // Add the variable to the current scope
-        currentScope.variables.put(name, new Variable(name, type, isFinal, isInitialized));
+        Variable newVar = new Variable(name, type, isFinal, isInitialized);
+        if (!inMethod) {  // If in global scope
+            newVar.setInitializedInGlobalScope(isInitialized);
+        }
+        currentScope.variables.put(name, newVar);
     }
 
     /**
@@ -146,6 +146,10 @@ public class ScopeValidator {
         Variable var = findVariable(name);
         if (var.isFinal() && var.isInitialized()) {
             throw new IllegalSjavaFileException(ERR_FINAL_REASSIGN + name);
+        }
+        var.setInitialized(true);
+        if (!inMethod && isGlobalVariable(name)) {
+            var.setInitializedInGlobalScope(true);
         }
 
         if (isGlobalVariable(name) && getCurrentScope() != globalScope) {
@@ -175,8 +179,17 @@ public class ScopeValidator {
      * @throws IllegalSjavaFileException if the variable is not initialized
      */
     public void validateVariableInitialization(String name) throws IllegalSjavaFileException {
-        if (!findVariable(name).isInitialized()) {
-            throw new IllegalSjavaFileException(String.format(ERR_VAR_NOT_INIT, name));
+        Variable var = findVariable(name);
+        if (!inMethod) {  // If we're in global scope
+            if (!var.isInitialized()) {
+                throw new IllegalSjavaFileException(String.format(ERR_VAR_NOT_INIT, name));
+            }
+        } else {  // If we're in a method
+            if (isGlobalVariable(name) && !var.isInitializedInGlobalScope()) {
+                throw new IllegalSjavaFileException(String.format(ERR_VAR_NOT_INIT, name));
+            } else if (!var.isInitialized()) {
+                throw new IllegalSjavaFileException(String.format(ERR_VAR_NOT_INIT, name));
+            }
         }
     }
 
