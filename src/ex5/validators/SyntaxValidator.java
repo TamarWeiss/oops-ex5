@@ -25,13 +25,6 @@ public class SyntaxValidator {
     private static final String PATTERN_METHOD_PARAMS = "\\s*\\(.*";
     private static final String PATTERN_INVALID_METHOD = "\\s*" + PATTERN_TYPE + WHITESPACE + PATTERN_WORD
                                                          + PATTERN_METHOD_PARAMS;
-    // Operators pattern
-    private static final String PATTERN_OPERATORS = ".*[+\\-*/%].*";
-    private static final String PATTERN_STRING_LITERAL = ".*['\"].*";
-
-    // Array syntax
-    private static final String ARRAY_OPEN = "[";
-    private static final String ARRAY_CLOSE = "]";
 
     // Error messages
     private static final String ERR_MULTILINE_COMMENT = "Multi-line comments are not allowed";
@@ -41,8 +34,6 @@ public class SyntaxValidator {
     private static final String ERR_INVALID_METHOD =
             "Invalid declaration: appears to be a method declaration with non-void return type. " +
             "Only void methods are supported in s-Java";
-    private static final String ERR_NO_OPERATORS = "Operators are not allowed in s-Java";
-    private static final String ERR_NO_ARRAYS = "Arrays are not supported in s-Java";
 
     // Compiled patterns for performance
     private static final Pattern REQUIRED_WHITESPACE = Pattern.compile(PATTERN_REQUIRED_WHITESPACE);
@@ -77,31 +68,6 @@ public class SyntaxValidator {
 
         if (INVALID_METHOD_DECLARATION.matcher(line).matches()) {
             throw new IllegalSjavaFileException(ERR_INVALID_METHOD);
-        }
-    }
-
-    /**
-     * Validates operator absence (not allowed in s-Java)
-     *
-     * @param line The line to validate
-     * @throws IllegalSjavaFileException if operators are found
-     */
-    public void validateNoOperators(String line) throws IllegalSjavaFileException {
-        // Check for arithmetic and string operators
-        if (line.matches(PATTERN_OPERATORS) && !line.matches(PATTERN_STRING_LITERAL)) {
-            throw new IllegalSjavaFileException(ERR_NO_OPERATORS);
-        }
-    }
-
-    /**
-     * Validates array absence (not allowed in s-Java)
-     *
-     * @param line The line to validate
-     * @throws IllegalSjavaFileException if array syntax is found
-     */
-    public void validateNoArrays(String line) throws IllegalSjavaFileException {
-        if (line.contains(ARRAY_OPEN) || line.contains(ARRAY_CLOSE)) {
-            throw new IllegalSjavaFileException(ERR_NO_ARRAYS);
         }
     }
 }
