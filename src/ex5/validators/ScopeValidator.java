@@ -39,24 +39,51 @@ public class ScopeValidator {
         private final boolean isFinal;
         private boolean isInitialized;
 
+        /**
+         * Creates a new variable
+         *
+         * @param type         the variable's type
+         * @param isFinal      if the variable is final
+         * @param isInitialized if the variable is initialized
+         */
         public Variable(Types type, boolean isFinal, boolean isInitialized) {
             this.type = type;
             this.isFinal = isFinal;
             this.isInitialized = isInitialized;
         }
 
+        /**
+         * Gets the variable's type
+         *
+         * @return the variable's type
+         */
         public Types getType() {
             return type;
         }
 
+        /**
+         * Checks if the variable is final
+         *
+         * @return true if the variable is final
+         */
         public boolean isFinal() {
             return isFinal;
         }
 
+        /**
+         * Checks if the variable is initialized
+         *
+         * @return true if the variable is initialized
+         */
         public boolean isInitialized() {
             return isInitialized;
         }
 
+        /**
+         * Sets the variable's initialization status
+         *
+         * @param initialized true if the variable is initialized
+         */
         public void setInitialized(boolean initialized) {
             isInitialized = initialized;
         }
@@ -190,6 +217,12 @@ public class ScopeValidator {
         return findVariable(name).getType();
     }
 
+    /**
+     * Validates that a variable is initialized
+     *
+     * @param name the variable's name
+     * @throws IllegalSjavaFileException if the variable is not initialized
+     */
     public void validateVariableInitialization(String name) throws IllegalSjavaFileException {
         if (!findVariable(name).isInitialized()) {
             throw new IllegalSjavaFileException(String.format(ERR_VAR_NOT_INIT, name));

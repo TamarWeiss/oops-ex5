@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
  * Contains common functionality and utilities used by specific parsers
  */
 public abstract class BaseParser {
+    /** Regex pattern for a valid s-Java identifier */
     protected static final String IDENTIFIER = "([a-zA-Z]\\w*|_[a-zA-Z\\d]\\w*)";
     protected static final String RETURN_PATTERN = "^\\s*return\\s*;\\s*$";
     private static final String EMPTY_IDENTIFIER_ERR = "Empty identifier";

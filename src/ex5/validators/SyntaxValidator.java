@@ -18,8 +18,8 @@ public class SyntaxValidator {
     private static final String MULTI_LINE_START = "/\\*";
     private static final String MULTI_LINE_END = "\\*/";
     private static final String LEADING_SPACE_COMMENT = "^\\s+//";
-    private static final String PATTERN_INVALID_COMMENT =
-            MULTI_LINE_START + "|" + MULTI_LINE_END + "|" + LEADING_SPACE_COMMENT;
+    private static final String PATTERN_INVALID_COMMENT = MULTI_LINE_START + "|" + MULTI_LINE_END +
+            "|" + LEADING_SPACE_COMMENT;
 
     // Whitespace validation patterns
     private static final String PATTERN_TYPE_GROUP = "(" + VOID + "|" + FINAL + "|" + Types.LEGAL_TYPES + ")";
@@ -51,8 +51,8 @@ public class SyntaxValidator {
     private static final String ERR_INLINE_COMMENT = "Inline comments are not allowed in s-Java";
     private static final String ERR_INVALID_COMMENT = "Invalid comment format";
     private static final String ERR_MISSING_WHITESPACE = "Missing required whitespace after keyword";
-    private static final String ERR_INVALID_METHOD =
-            "Invalid declaration: appears to be a method declaration with non-void return type. " +
+    private static final String ERR_INVALID_METHOD = "Invalid declaration: appears to be a method  " +
+            "declaration with non-void return type. " +
             "Only void methods are supported in s-Java";
     private static final String ERR_MISSING_TYPE_SPACE = "Missing required space between type and identifier";
     private static final String ERR_INVALID_COMMENT_SYNTAX = "Invalid comment syntax";
@@ -100,6 +100,12 @@ public class SyntaxValidator {
         }
     }
 
+    /**
+     * Validates required spaces in line
+     *
+     * @param line The line to validate
+     * @throws IllegalSjavaFileException if required spaces are missing
+     */
     public void validateRequiredSpaces(String line) throws IllegalSjavaFileException {
         if (MISSING_REQUIRED_SPACE.matcher(line).matches()) {
             throw new IllegalSjavaFileException(ERR_MISSING_TYPE_SPACE);
