@@ -43,8 +43,7 @@ public class FileProcessor {
             validationManager.reset();  // Reset validation state
 
             while ((line = reader.readLine()) != null) {
-                lineNumber++;
-                validationManager.validateLine(line, lineNumber);
+                validationManager.validateLine(line, ++lineNumber);
             }
 
             // Check the final state
