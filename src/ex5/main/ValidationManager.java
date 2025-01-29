@@ -36,7 +36,9 @@ public class ValidationManager {
 
     private final LineParser lineParser = new LineParser();
     private final ScopeValidator scopeValidator = new ScopeValidator();
-    private final MethodParser methodParser = new MethodParser(this.scopeValidator);
+    private final MethodParser methodParser = new MethodParser(
+            this.scopeValidator, this::validateVariableValue
+    );
     private final VariableParser variableParser = new VariableParser();
     private final SyntaxValidator syntaxValidator = new SyntaxValidator();
     private final TypeValidator typeValidator = new TypeValidator();
@@ -177,7 +179,7 @@ public class ValidationManager {
      * @param type  the variable's type
      * @throws IllegalSjavaFileException if the value is incompatible with the given variable
      */
-    private void validateVariableValue(String value, Types type) throws IllegalSjavaFileException {
+    public void validateVariableValue(String value, Types type) throws IllegalSjavaFileException {
         try {
             // Try to validate as identifier first
             variableParser.validateIdentifier(value);

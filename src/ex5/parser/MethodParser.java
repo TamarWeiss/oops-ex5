@@ -6,6 +6,7 @@ import ex5.validators.ScopeValidator.Variable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 import static ex5.Constants.*;
 
@@ -29,7 +30,6 @@ public class MethodParser extends BaseParser {
     private static final String ERR_CALL_OUTSIDE = "Method call outside method body";
     private static final String ERR_METHOD_NOT_FOUND = "Method not found: ";
     private static final String ERR_PARAM_COUNT = "Incompatible number of parameters: expected ";
-    private static final String ERR_PARAM_TYPES = "Incompatible parameter types: expected ";
     private static final String ERR_PARAM_FORMAT = "Invalid parameter format: ";
     private static final String ERR_PARAM_MODIFIER = "Invalid parameter modifier: ";
     private static final String GOT = ", got ";
@@ -38,14 +38,16 @@ public class MethodParser extends BaseParser {
 
     private final List<Method> methods = new ArrayList<>();
     private final ScopeValidator scopeValidator;
+    private final BiConsumer<String, Types> validateValueCallback;
 
     /**
      * The class main constructor
      *
      * @param scopeValidator A ScopeValidator instance
      */
-    public MethodParser(ScopeValidator scopeValidator) {
+    public MethodParser(ScopeValidator scopeValidator, BiConsumer<String, Types> validateValueCallback) {
         this.scopeValidator = scopeValidator;
+        this.validateValueCallback = validateValueCallback;
     }
 
     /**
@@ -123,11 +125,7 @@ public class MethodParser extends BaseParser {
 
         for (int i = 0; i < params.length; i++) {
             Types expectedType = method.parameters.get(i).getType();
-            Types receivedType = scopeValidator.getVariableType(params[i]);
-            if (!expectedType.equals(receivedType)) {
-                throw new IllegalSjavaFileException(ERR_PARAM_TYPES + expectedType + GOT + receivedType);
-            }
-            scopeValidator.validateVariableInitialization(params[i]);
+            validateValueCallback.accept(params[i], expectedType);
         }
     }
 
