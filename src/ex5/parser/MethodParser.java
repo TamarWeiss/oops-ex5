@@ -7,23 +7,18 @@ import ex5.validators.ScopeValidator.Variable;
 import java.util.ArrayList;
 import java.util.List;
 
+import static ex5.Constants.*;
+
 /**
  * Parser for handling method declarations and bodies in s-Java
  * also checks for valid return statements and method calls
  */
 public class MethodParser extends BaseParser {
     private static final String METHOD_NAME_REGEX = "^[a-zA-Z]\\w*$";
-    private static final String RETURN_STATEMENT_REGEX = "^return\\s*;$";
-    private static final String PARAMETER_SEPARATOR = ",";
-    private static final String WHITESPACE_REGEX = "\\s+";
-    private static final String PARAMETER_SEPARATOR_REGEX = "\\s*,\\s*";
-    private static final String FINAL_KEYWORD = "final";
     private static final String OPEN_PAREN = "(";
     private static final String CLOSE_PAREN = ")";
-    private static final int MIN_PARTS = 2;
-    private static final int MAX_PARTS = 3;
-    private static final int FINAL_MODIFIER_INDEX = 1;
-
+    private static final int MIN_VARIABLE_LENGTH = 2;
+    private static final int MAX_VARIABLE_LENGTH = 3;
 
     // Error messages
     private static final String ERR_NESTED_METHODS = "Nested method declarations are not allowed";
@@ -99,7 +94,7 @@ public class MethodParser extends BaseParser {
             throw new IllegalSjavaFileException(ERR_RETURN_OUTSIDE);
         }
 
-        if (!line.trim().matches(RETURN_STATEMENT_REGEX)) {
+        if (!line.matches(RETURN_PATTERN)) {
             throw new IllegalSjavaFileException(ERR_INVALID_RETURN);
         }
     }
@@ -124,18 +119,14 @@ public class MethodParser extends BaseParser {
         String[] params = extractParameters(line);
         int expectedLength = method.parameters.size();
         if (params.length != expectedLength) {
-            throw new IllegalSjavaFileException(
-                    ERR_PARAM_COUNT + expectedLength + GOT + params.length
-            );
+            throw new IllegalSjavaFileException(ERR_PARAM_COUNT + expectedLength + GOT + params.length);
         }
 
         for (int i = 0; i < params.length; i++) {
             Types expectedType = method.parameters.get(i).getType();
             Types receivedType = scopeValidator.getVariableType(params[i]);
             if (!expectedType.equals(receivedType)) {
-                throw new IllegalSjavaFileException(
-                        ERR_PARAM_TYPES + expectedType + GOT + receivedType
-                );
+                throw new IllegalSjavaFileException(ERR_PARAM_TYPES + expectedType + GOT + receivedType);
             }
             scopeValidator.validateVariableInitialization(params[i]);
         }
@@ -167,7 +158,7 @@ public class MethodParser extends BaseParser {
      */
     private String getMethodName(String line, LineType lineType) {
         String start = line.substring(0, line.indexOf(OPEN_PAREN)).trim();
-        return lineType == LineType.METHOD_DECLARATION ? start.split(WHITESPACE_REGEX)[1] : start;
+        return lineType == LineType.METHOD_DECLARATION ? start.split(WHITESPACE)[1] : start;
     }
 
     /**
@@ -180,7 +171,7 @@ public class MethodParser extends BaseParser {
         String params = line.substring(
                 line.indexOf(OPEN_PAREN) + 1, line.lastIndexOf(CLOSE_PAREN)
         ).trim();
-        return params.isEmpty() ? new String[0] : params.split(PARAMETER_SEPARATOR_REGEX);
+        return params.isEmpty() ? new String[0] : params.split(COMMA);
     }
 
     /**
@@ -191,8 +182,8 @@ public class MethodParser extends BaseParser {
      * @throws IllegalSjavaFileException if the parameter's format is incorrect in any way
      */
     private Variable parseParameter(String param) throws IllegalSjavaFileException {
-        String[] paramParts = param.split(WHITESPACE_REGEX);
-        boolean isFinal = paramParts[0].equals(FINAL_KEYWORD);
+        String[] paramParts = param.split(WHITESPACE);
+        boolean isFinal = paramParts[0].equals(FINAL);
         int typeIndex = isFinal ? 1 : 0;
 
         Types type = Types.getType(paramParts[typeIndex]);
@@ -209,25 +200,22 @@ public class MethodParser extends BaseParser {
      */
     private void validateParameters(String[] params) throws IllegalSjavaFileException {
         for (String param : params) {
-            String[] parts = param.split(WHITESPACE_REGEX);
+            String[] parts = param.split(WHITESPACE);
+            boolean isFinal = parts.length == MAX_VARIABLE_LENGTH;
 
             // Check for 2 or 3 parts (final modifier is optional)
-            if (parts.length < MIN_PARTS || parts.length > MAX_PARTS) {
+            if (parts.length < MIN_VARIABLE_LENGTH || parts.length > MAX_VARIABLE_LENGTH) {
                 throw new IllegalSjavaFileException(ERR_PARAM_FORMAT + param);
             }
 
-            int typeIndex = parts.length == MAX_PARTS ? 1 : 0;
-
             // Validate final modifier if present
-            if (parts.length == MAX_PARTS && !parts[0].equals(FINAL_KEYWORD)) {
+            if (isFinal && !parts[0].equals(FINAL)) {
                 throw new IllegalSjavaFileException(ERR_PARAM_MODIFIER + parts[0]);
             }
 
-            // Validate type
-            Types.getType(parts[typeIndex]);
-
-            // Validate parameter name
-            validateIdentifier(parts[typeIndex + 1]);
+            int typeIndex = isFinal ? 1 : 0;
+            Types.getType(parts[typeIndex]); // Validate type
+            validateIdentifier(parts[typeIndex + 1]); // Validate parameter name
         }
     }
 }

@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
  */
 public abstract class BaseParser {
     protected static final String IDENTIFIER = "([a-zA-Z]\\w*|_[a-zA-Z\\d]\\w*)";
+    protected static final String RETURN_PATTERN = "^\\s*return\\s*;\\s*$";
     private static final String EMPTY_IDENTIFIER_ERR = "Empty identifier";
     private static final String INVALID_IDENTIFIER_ERR = "Invalid identifier: ";
 

@@ -19,7 +19,7 @@ public class ScopeValidator {
     private static final String ERR_MISMATCHED_SCOPE = "Mismatched scope end";
     private static final String ERR_PARAM_OUTSIDE = "Method parameter declaration outside method scope";
     private static final String ERR_DUPLICATE_PARAM = "Duplicate parameter name: ";
-    private static final String ERR_DOUBLE_UNDERSCORE = "Variable names cannot start with double underscore: ";
+    private static final String ERR_DOUBLE_UNDERSCORE = "Variable names cannot start with __: ";
     private static final String ERR_VAR_REDECLARED = "Variable already declared in current scope: ";
     private static final String ERR_GLOBAL_CONFLICT = "Global variable name conflict: ";
     private static final String ERR_FINAL_REASSIGN = "Cannot reassign final variable: ";
@@ -139,7 +139,7 @@ public class ScopeValidator {
      * @throws IllegalSjavaFileException for invalid variable declaration
      */
     public void declareVariable(String name, Types type, boolean isFinal, boolean isInitialized)
-            throws IllegalSjavaFileException {
+    throws IllegalSjavaFileException {
         // Validate variable name doesn't start with double underscore
         if (name.startsWith(DOUBLE_UNDERSCORE_PREFIX)) {
             throw new IllegalSjavaFileException(ERR_DOUBLE_UNDERSCORE + name);

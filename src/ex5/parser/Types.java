@@ -12,15 +12,11 @@ public enum Types {
     BOOLEAN("boolean"),
     CHAR("char");
 
-    // Legal types in s-Java
-    /**
-     * A string containing all legal types in s-Java
-     */
+    /** A string containing all legal types in s-Java */
     public static final String LEGAL_TYPES = String.join(
             "|", Arrays.stream(Types.values()).map(Types::toString).toList()
     );
     private static final String UNKNOWN_TYPE_ERR = "Unknown type: ";
-    
     private final String type;
 
     Types(final String type) {

@@ -9,32 +9,27 @@ import ex5.validators.TypeValidator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static ex5.Constants.*;
+
 /**
  * Manages the validation chain for s-Java code verification.
  * Coordinates different validators and ensures proper validation order.
  */
 public class ValidationManager {
-    private static final String FINAL_KEYWORD = "final";
-    private static final String COMMA_SEPARATOR = ",";
-    private static final String EQUALS_OPERATOR = "=";
     private static final String CONDITION_REGEX = "\\((.*?)\\)";
     private static final String LOGICAL_OPERATOR_REGEX = "\\s*(\\|\\||&&)\\s*";
-    private static final String WHITESPACE_REGEX = "\\s+";
-    private static final String COMMA_WITH_SPACES_REGEX = "\\s*,\\s*";
-    private static final String EQUALS_WITH_SPACES_REGEX = "\\s*=\\s*";
-    private static final String OR_OPERATOR = "||";
-    private static final String AND_OPERATOR = "&&";
-    private static final String TRUE_LITERAL = "true";
-    private static final String FALSE_LITERAL = "false";
+    private static final String OR = "||";
+    private static final String AND = "&&";
 
     // Error messages
     private static final String ERR_INVALID_LINE = "Invalid line format";
-    private static final String ERR_FINAL_UNINITIALIZED = "Final variable must be initialized: ";
+    private static final String ERR_UNINITIALIZED_FINAL = "Final variable must be initialized: ";
     private static final String ERR_INVALID_ASSIGNMENT = "Invalid assignment format";
     private static final String ERR_BLOCK_OUTSIDE_METHOD = "Block statement outside method at line:";
     private static final String ERR_INVALID_CONDITION = "Invalid block condition format at line:";
     private static final String ERR_MISSING_RETURN = "Missing return statement at method end";
-    private static final String ERR_INVALID_OPERATORS = "Logical operators cannot be at start or end of condition";
+    private static final String ERR_INVALID_OPERATORS =
+            "Logical operators cannot be at start or end of condition";
     private static final String ERR_CONSECUTIVE_OPERATORS = "Cannot have consecutive operators";
     private static final String ERR_LINE_NUMBER_FORMAT = "Line %d: %s";
 
@@ -96,7 +91,9 @@ public class ValidationManager {
             lastLineWasReturn = lineType == LineType.RETURN_STATEMENT;
 
         } catch (IllegalSjavaFileException e) {
-            throw new IllegalSjavaFileException(String.format(ERR_LINE_NUMBER_FORMAT, lineNumber, e.getMessage()));
+            throw new IllegalSjavaFileException(
+                    String.format(ERR_LINE_NUMBER_FORMAT, lineNumber, e.getMessage())
+            );
         }
     }
 
@@ -131,10 +128,10 @@ public class ValidationManager {
         line = line.trim();
 
         // Handle multiple variable declarations
-        boolean isFinal = line.startsWith(FINAL_KEYWORD);
-        Types type = Types.getType(line.split(WHITESPACE_REGEX)[isFinal ? 1 : 0]);
-        int start = type.toString().length() + (isFinal ? FINAL_KEYWORD.length() + 1 : 0);
-        String[] declarations = line.substring(start, line.length() - 1).trim().split(COMMA_WITH_SPACES_REGEX);
+        boolean isFinal = line.startsWith(FINAL);
+        Types type = Types.getType(line.split(WHITESPACE)[isFinal ? 1 : 0]);
+        int start = type.toString().length() + (isFinal ? FINAL.length() + 1 : 0);
+        String[] declarations = line.substring(start, line.length() - 1).trim().split(COMMA);
 
         // Process each declaration
         for (String declaration : declarations) {
@@ -151,14 +148,14 @@ public class ValidationManager {
      * @throws IllegalSjavaFileException if the variable declaration is invalid
      */
     private void processSingleDeclaration(String declaration, Types type, boolean isFinal)
-            throws IllegalSjavaFileException {
-        String[] parts = declaration.split(EQUALS_WITH_SPACES_REGEX);
+    throws IllegalSjavaFileException {
+        String[] parts = declaration.split(EQUALS);
         String name = parts[0];
         boolean isInitialized = parts.length > 1;
         String value = isInitialized ? parts[1] : null;
 
         if (isFinal && !isInitialized) {
-            throw new IllegalSjavaFileException(ERR_FINAL_UNINITIALIZED + name);
+            throw new IllegalSjavaFileException(ERR_UNINITIALIZED_FINAL + name);
         }
 
         if (isInitialized) {
@@ -176,10 +173,10 @@ public class ValidationManager {
      */
     private void processVariableAssignment(String line) throws IllegalSjavaFileException {
         line = line.trim();
-        String[] assignments = line.substring(0, line.length() - 1).split(COMMA_WITH_SPACES_REGEX);
+        String[] assignments = line.substring(0, line.length() - 1).split(COMMA);
 
         for (String assignment : assignments) {
-            String[] parts = assignment.split(EQUALS_WITH_SPACES_REGEX);
+            String[] parts = assignment.split(EQUALS);
             if (parts.length != 2) {
                 throw new IllegalSjavaFileException(ERR_INVALID_ASSIGNMENT);
             }
@@ -194,8 +191,9 @@ public class ValidationManager {
 
     /**
      * Checks if a given variable's value is valid
+     *
      * @param value the variable's value
-     * @param type the variable's type
+     * @param type  the variable's type
      * @throws IllegalSjavaFileException if the value is incompatible with the given variable
      */
     private void validateVariableValue(String value, Types type) throws IllegalSjavaFileException {
@@ -252,14 +250,13 @@ public class ValidationManager {
      */
     private void validateCondition(String condition) throws IllegalSjavaFileException {
         // Check for invalid operator placement at start/end
-        if (condition.startsWith(OR_OPERATOR) || condition.startsWith(AND_OPERATOR) ||
-                condition.endsWith(OR_OPERATOR) || condition.endsWith(AND_OPERATOR)) {
+        if (condition.startsWith(OR) || condition.startsWith(AND) ||
+            condition.endsWith(OR) || condition.endsWith(AND)) {
             throw new IllegalSjavaFileException(ERR_INVALID_OPERATORS);
         }
 
         // Split by || and &&, discarding the operators
-        String[] tokens = condition.split(LOGICAL_OPERATOR_REGEX);
-        for (String token : tokens) {
+        for (String token : condition.split(LOGICAL_OPERATOR_REGEX)) {
             if (token.isEmpty()) {
                 throw new IllegalSjavaFileException(ERR_CONSECUTIVE_OPERATORS);
             }
@@ -269,7 +266,7 @@ public class ValidationManager {
 
     private void validateSingleCondition(String condition) throws IllegalSjavaFileException {
         // Check for boolean literals
-        if (condition.equals(TRUE_LITERAL) || condition.equals(FALSE_LITERAL)) {
+        if (condition.equals(TRUE) || condition.equals(FALSE)) {
             return;
         }
 
